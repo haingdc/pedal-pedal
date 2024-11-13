@@ -1,0 +1,116 @@
+---
+title: Lập trình plugin Babel
+date: '2024-11-13'
+tags: ['babel']
+draft: false
+summary: Tạo plugin Babel để biên dịch mã Javascript
+---
+
+# Phần I. Template
+
+Công thức là template gồm:
++ webpack
++ babel
+
+webpack là công cụ đóng gói các module, nó nhận các mã nguồn, assets như svg, ảnh, ... và sau các quá trình xử lí sẽ cho ra mã được tối ưu hoá để chạy ở môi trường production.
+
+webpack-cli là công cụ dòng lệnh cho phép bạn tương tác với Webpack thông qua terminal. Ta sẽ qui định lệnh đóng gói ở package.json. Đơn giản như `"build": "webpack"`
+
+@babel/core là thư viện chính trong hệ sinh thái Babel, một công cụ chuyển đổi (transpiler) JavaScript. Nó đóng vai trò quan trọng trong việc biên dịch mã JavaScript từ phiên bản mới hơn sang phiên bản cũ hơn mà có thể được các trình duyệt hoặc môi trường khác hỗ trợ
+
+babel-loader đóng vai trò là cầu nối giúp webpack sử dụng các babel plugin. Mục tiêu của bài viết là đi xây dựng một số babel plugin.
+
+```terminal
+npm install --save-dev webpack webpack-cli @babel/core babel-loader
+```
+
+File webpack.config.cjs:
+
+File cài đặt này có đuôi cjs mang ý nghĩa đó là commonjs, với câu lệnh require, module.exports. Bởi ta sẽ chạy trong môi trường node, nó mặc định chạy theo hệ thống CommonJs.
+
+```js
+const path = require('path');
+
+/**
+ * @type {import("webpack/types").Configuration}
+ */
+module.exports = {
+  name: 'swc-plugin-test',
+  mode: 'production',
+  entry: path.join(__dirname, 'src', 'index.js'),
+  output: {
+    path: path.join(__dirname, 'dist'),
+    module: true,
+    filename: 'bundle.js',
+    clean: true,
+  },
+  experiments: {
+    outputModule: true,
+  },
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',
+        },
+      },
+    ],
+  },
+  optimization: {
+    minimize: false,
+    moduleIds: "named",
+    chunkIds: "named",
+    splitChunks: false,
+  },
+}
+```
+
+File này qui định gì?
+
+Webpack sẽ chạy ở mode production
+
+Đầu tiên nó có 1 entry duy nhất là src/index.js. Webpack cho phép nhiều entry nhưng ở đây ta chỉ cần một là đủ.
+
+Tiếp theo, output là kết quả của quá trình đóng gói module sẽ là thư mục dist
+
+Chúng ta cũng sẽ tắt một số tuỳ chọn tối ưu cho code đầu ra như minimize code, hiển thị tên chunk dưới dạng tên thay vì ID, giữ tên các hàm, biến và không tách code vô nhiều file mà tập trung vào 1 file duy nhất.
+
+Khi thực thi gặp file `js`, webpack sẽ cần nhờ tới babel-loader. Tại đó, first-plugin.js được gọi. Ta sẽ qui định các cài đặt phía dưới, bao gồm danh sách các plugin và preset. Preset là một nhóm các plugin được quản lí và cho phép hoạt động trong một mục tiêu cụ thể, thay vì ta đi cài đặt các plugin riêng lẻ. Các mục tiêu có thể kể ra như đảm bảo code có thể chạy được trên mọi trình duyệt version mới, xử lí file jsx, typescript, v..
+
+
+```js
+/**
+ * @type {import("@babel/core").ConfigFunction}
+ */
+module.exports = function (api) {
+  api.cache(true)
+
+  const presets = []
+  const plugins = [
+    './babel-plugins/first-plugin.js',
+  ]
+
+  return {
+    presets: presets,
+    plugins: plugins,
+  }
+}
+```
+
+Ta cũng bắt đầu bằng plugin không làm gì first-plugin.js:
+
+```js
+/**
+ * @param {import('@babel/core')} babel
+ * @returns {import('@babel/core').PluginObj}
+ */
+module.exports = function (babel) {
+  return {
+    visitor: {},
+  }
+}
+```
+
+Vậy là bạn đã có template ban đầu để đi xây dựng plugin Babel.
