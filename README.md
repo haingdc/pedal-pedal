@@ -1,3 +1,6 @@
+Environments:
+Node version: v23.3.0
+
 ![tailwind-nextjs-banner](/public/static/images/twitter-card.png)
 
 # Tailwind Nextjs Starter Blog

@@ -3,6 +3,7 @@ const { withContentlayer } = require('next-contentlayer2')
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
 })
+const StatoscopeWebpackPlugin = require('@statoscope/webpack-plugin').default
 
 // You might need to insert additional domains in script-src if you are using external services
 const ContentSecurityPolicy = `
@@ -106,6 +107,16 @@ module.exports = () => {
         test: /\.svg$/,
         use: ['@svgr/webpack'],
       })
+      config.plugins.push(
+        new StatoscopeWebpackPlugin({
+          open: false,
+          compressor: 'gzip',
+          saveReportTo: '.next/static/statoscope-analyze/report.html',
+          saveStatsTo: '.next/static/statoscope-analyze/stats.json',
+          normalizeStats: false,
+          watchMode: false,
+        })
+      )
 
       return config
     },
