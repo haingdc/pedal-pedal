@@ -102,7 +102,38 @@ module.exports = () => {
         },
       ]
     },
+    /**
+     * @param {import('webpack').Configuration} config
+     * @param {import('next').NextConfig} options
+     * @returns {import('webpack').Configuration}
+     */
     webpack: (config, options) => {
+      /*
+      optimization: {
+        usedExports: false,
+        minimize: false,
+        moduleIds: "named",
+        chunkIds: "named",
+        splitChunks: false,
+        runtimeChunk: 'single',
+      }
+      // hiện tại
+      {
+        emitOnErrors: true,
+        checkWasmTypes: false,
+        nodeEnv: false,
+        splitChunks: { filename: 'edge-chunks/[name].js', chunks: 'all', minChunks: 2 },
+        runtimeChunk: undefined,
+        minimize: true,
+        minimizer: [ [Function (anonymous)], [Function (anonymous)] ]
+      }
+       */
+      config.optimization = {
+        ...config.optimization,
+        minimize: true,
+        moduleIds: 'named',
+        chunkIds: 'named',
+      }
       config.module.rules.push({
         test: /\.svg$/,
         use: ['@svgr/webpack'],

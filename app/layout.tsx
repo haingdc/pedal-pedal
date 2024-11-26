@@ -1,9 +1,8 @@
 import 'css/tailwind.css'
 import 'pliny/search/algolia.css'
 import 'remark-github-blockquote-alert/alert.css'
-import 'css/global-deprecated.css'
 
-import { Space_Grotesk } from 'next/font/google'
+import { Be_Vietnam_Pro } from 'next/font/google'
 import { Analytics, AnalyticsConfig } from 'pliny/analytics'
 import { SearchProvider, SearchConfig } from 'pliny/search'
 import Header from '@/components/Header'
@@ -13,10 +12,11 @@ import siteMetadata from '@/data/siteMetadata'
 import { ThemeProviders } from './theme-providers'
 import { Metadata } from 'next'
 
-const space_grotesk = Space_Grotesk({
+const space_grotesk = Be_Vietnam_Pro({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-space-grotesk',
+  variable: '--font-ngay-he',
+  weight: '400',
 })
 
 export const metadata: Metadata = {

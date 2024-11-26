@@ -3,7 +3,8 @@ const siteMetadata = {
   title: 'Ngày hè',
   author: 'Hai Nguyen',
   headerTitle: 'Blog ngày hè',
-  description: 'Những bài viết dạo gần đây',
+  description:
+    'Vọc, chia sẻ và Kết nối để có thời gian vui vẻ, cùng nhau phát triển, né xa thánh perfect',
   language: 'vi',
   theme: 'light', // system, dark or light
   siteUrl: 'https://ngayhe.com',
