@@ -1,0 +1,48 @@
+---
+title: Phát hiện trong quá trình xây dựng trang blog
+date: '2024-11-27'
+tags: []
+draft: false
+summary:
+---
+
+1. Ta có thể tăng độ ưu tiên cho việc tải font bằng cách sử dụng thẻ link với attribute là 'preload':
+
+- Trường hợp 1. Không Preload
+
+
+![Screenshot 2024-11-26 at 17.46.50.png](/static/images/1f0bcd6d-21ea-49a2-9a21-4821d7bf89d5/38df2260c84f46608dfb1b02eba32cc2.jpeg)
+
+- Trường hợp 2. Preload
+
+![font được ưu tiên tải](/static/images/1f0bcd6d-21ea-49a2-9a21-4821d7bf89d5/50f768e22bf74a68bfcb7414d652d515.jpeg)
+
+Ta nói với trình duyệt rắng:
+
+\- "Trang sẽ cần hiển thị nội dung theo font đó nên rằng thì là mà... Hm, hãy tải font về thật sớm cho tôi!"
+
+Trong hình, để ý vị trí font được đặt ở các row trên cùng, ngay dưới file html tại URL http://localhost:3000/
+
+Ta đang sử dụng google font vốn được NextJs cung cấp sẵn sàng.
+
+Lúc này thực chất ở thẻ head sẽ chứa thẻ link preload:
+
+```html
+<link
+	rel="preload"
+	href={`path-to-your-font.woff2`}
+	as="font"
+	type="font/woff2"
+	crossOrigin="anonymous"
+/>
+```
+
+Dù vậy, sử dụng preload không đảm bảo font sẽ sẵn sàng khi render nội dung của page
+
+Một cách khác thay vì sử dụng preload là Font Loading API
+
+Tham khảo:
+- [Optimize WebFont loading and rendering](https://web.dev/articles/optimize-webfont-loading#the-font-loading-api)
+- [MDN CSS Font loading](https://developer.mozilla.org/en-US/docs/Web/API/CSS_Font_Loading_API)
+
+<PaperAirplane />

@@ -12,7 +12,7 @@ import siteMetadata from '@/data/siteMetadata'
 import { ThemeProviders } from './theme-providers'
 import { Metadata } from 'next'
 
-const space_grotesk = Be_Vietnam_Pro({
+const ngay_he_font = Be_Vietnam_Pro({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-ngay-he',
@@ -65,7 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang={siteMetadata.language}
-      className={`${space_grotesk.variable} scroll-smooth`}
+      className={`${ngay_he_font.variable} scroll-smooth`}
       suppressHydrationWarning
     >
       <link
