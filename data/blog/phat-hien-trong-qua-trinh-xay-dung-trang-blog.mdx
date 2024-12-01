@@ -37,12 +37,35 @@ Lúc này thực chất ở thẻ head sẽ chứa thẻ link preload:
 />
 ```
 
+Do font có thể là request CORS, Ta thiết lập attribute crossorigin đảm bảo preload cũng sẽ request CORS.
+
 Dù vậy, sử dụng preload không đảm bảo font sẽ sẵn sàng khi render nội dung của page
 
 Một cách khác thay vì sử dụng preload là Font Loading API
 
+Sử dụng preload một cách chắt chiu. Mục đích của preload là thiết lập độ ưu tiên tải về các tài nguyên. Đó là sự cân bằng của vấn đề trình duyệt yêu cầu tải tài nguyên theo độ ưu tiên với việc server quyết định chọn gì để trả về trình duyệt.
+
 Tham khảo:
 - [Optimize WebFont loading and rendering](https://web.dev/articles/optimize-webfont-loading#the-font-loading-api)
 - [MDN CSS Font loading](https://developer.mozilla.org/en-US/docs/Web/API/CSS_Font_Loading_API)
+
+Preload cho phép ưu tiên tải hình ảnh dựa theo media:
+
+```html
+<link
+  rel="preload"
+  media="(max-width: 399px)"
+  href="alphatauri_tablet.jpg"
+  as="image"
+/>
+<link
+  rel="preload"
+  media="(min-width: 400px)"
+  href="alphatauri_desktop.jpg"
+  as="image"
+/>
+```
+
+
 
 <PaperAirplane />
