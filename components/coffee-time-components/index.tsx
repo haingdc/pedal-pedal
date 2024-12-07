@@ -8,6 +8,7 @@ import {
   ListItem,
   Section as SectionLib,
   Heading as HeadingLib,
+  Calendar,
 } from 'coffee-time-components'
 
 const Summary = (props) => {
@@ -26,4 +27,4 @@ const Heading = (props) => {
   return <HeadingLib className="not-prose" {...props} />
 }
 
-export { Details, Content, Summary, List, ListItem, Section, Heading }
+export { Details, Calendar, Content, Summary, List, ListItem, Section, Heading }
