@@ -5110,17 +5110,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"coffee-time-components@npm:^1.0.69":
-  version: 1.0.69
-  resolution: "coffee-time-components@npm:1.0.69"
+"coffee-time-components@npm:^1.0.70":
+  version: 1.0.70
+  resolution: "coffee-time-components@npm:1.0.70"
   dependencies:
     "@radix-ui/react-icons": "npm:^1.3.2"
     clsx: "npm:^2.1.1"
+    date-fns: "npm:^4.1.0"
+    date-fns-tz: "npm:^3.2.0"
     debug: "npm:^4.4.0"
   peerDependencies:
     react: ^16.8 || ^17 || ^18
     react-dom: ^16.8 || ^17 || ^18
-  checksum: 10/6ba054d06f35614f9a3b62d8fd6194272ae1922c7d13dd1d89d38ccd9a01e4e82a96a6bc19f412248d81f68ad10940ac0d40088406858baed07ed0caea9e3d58
+  checksum: 10/11d624e841e0316e88286731c94d79c8fee89fcdea874d930df98e670b1b9b10632dc9eba1d243af098a267fbc8da6a8903c4af345143192e3f70089db30249a
   languageName: node
   linkType: hard
 
@@ -5493,6 +5495,22 @@ __metadata:
     es-errors: "npm:^1.3.0"
     is-data-view: "npm:^1.0.1"
   checksum: 10/96f34f151bf02affb7b9f98762fb7aca1dd5f4553cb57b80bce750ca609c15d33ca659568ef1d422f7e35680736cbccb893a3d4b012760c758c1446bbdc4c6db
+  languageName: node
+  linkType: hard
+
+"date-fns-tz@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "date-fns-tz@npm:3.2.0"
+  peerDependencies:
+    date-fns: ^3.0.0 || ^4.0.0
+  checksum: 10/8ab4745f00b40381220f0a7a2ec16e217cb629d4018a19047264d289dd260322baa23e19b3ed63c7e553f9ad34bea9dea105391132930a3e141e9a0a53e54af2
+  languageName: node
+  linkType: hard
+
+"date-fns@npm:^4.1.0":
+  version: 4.1.0
+  resolution: "date-fns@npm:4.1.0"
+  checksum: 10/d5f6e9de5bbc52310f786099e18609289ed5e30af60a71e0646784c8185ddd1d0eebcf7c96b7faaaefc4a8366f3a3a4244d099b6d0866ee2bec80d1361e64342
   languageName: node
   linkType: hard
 
@@ -12188,7 +12206,7 @@ __metadata:
     "@typescript-eslint/parser": "npm:^6.1.0"
     autoprefixer: "npm:^10.4.13"
     body-scroll-lock: "npm:^4.0.0-beta.0"
-    coffee-time-components: "npm:^1.0.69"
+    coffee-time-components: "npm:^1.0.70"
     contentlayer2: "npm:0.5.1"
     cross-env: "npm:^7.0.3"
     embla-carousel-react: "npm:^8.3.0"
