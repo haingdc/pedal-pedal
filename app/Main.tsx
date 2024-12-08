@@ -10,6 +10,7 @@ const MAX_DISPLAY = 2710
 export default function Home({ posts }) {
   return (
     <>
+      {new Date().toString()}
       <Calendar />
       <div className="divide-y divide-gray-200 dark:divide-gray-700">
         <div className="space-y-2 pb-8 pt-6 md:space-y-5">
