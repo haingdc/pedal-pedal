@@ -1,0 +1,295 @@
+---
+title: Tạo plugin Babel qua ví dụ
+date: '2024-12-10'
+tags: ['babel']
+draft: false
+summary: Trong bài viết này, chúng ta sẽ bắt tay vào viết một plugin Babel đơn giản dựa vào template ở bài viết trước
+---
+
+# Phần I. Template
+
+<Section>
+  <Heading>Công thức bài viết bao gồm:</Heading>
+  <List>
+    <ListItem>Viết plugin cho Babel</ListItem>
+    <ListItem>Viết code để test plugin</ListItem>
+  </List>
+</Section>
+
+Mô tả:  
+
+
+```terminal
+npm install --save-dev @babel/core @types/babel__core babel-loader cross-env html-loader html-webpack-plugin webpack webpack-cli jest webpack-dev-server @types/jest @babel/preset-env
+```
+
+Ta có hàm inspect để in các giá trị ra màn hình. Hay nói cách khác console.log theo cách của bạn
+
+thứ 1: Global scope
+
+`inspect('foo')` sẽ transform thành `console.log('inspect', 'foo')`
+
+Bạn sẽ viết test trước, viết code cho plugin sau.
+
+Tôi lựa chọn Jest làm công cụ test bởi sự phổ biến. Và sử dụng test snapshot inline bởi nó đơn giản. Bạn không cần tới chuyển sang nhiều file cho một bài thực hành nhỏ.
+
+Thêm vào package.json script:
+
+```json
+"scripts": {tét
+        "test": "jest --watch",
+        "dev": "webpack-dev-server --config webpack.config.development.cjs",
+        "build": "cross-env NODE_ENV=production webpack --mode production --config webpack.config.production.cjs"
+},
+```
+
+Từ đây hãy thực thi lệnh `npm run test` để thực thi jest ở watch mode. Nó sẽ báo là chúng ta cần ít nhất một file có đuôi `.test.js`. 
+
+Hãy tạo file console-plugin/console.test.js và thêm vào nội dung như sau:
+
+```js
+/// <reference types="@types/jest" />
+const babel = require('@babel/core')
+const plugin = require('./console')
+
+/** @type {import('@babel/core').TransformOptions} */
+const opts = {
+  plugins: [plugin],
+  presets: ['@babel/preset-env'],
+}
+
+/**
+ * @type {import('@jest/globals').describe}
+ */
+describe('tại global scope', () => {
+  it('Nên hiển thị hello babel', () => {
+    const code = `inspect('hello babel');`
+    const output = babel.transformSync(code, opts)
+    expect(output.code).toMatchInlineSnapshot()
+  })
+})
+```
+
+Lưu file và code snapshot sẽ được tạo ra ngay trong chính file này, ở tham số của phương thức toMatchInlineSnapshot. Bởi ta vẫn chưa viết qui định là việc transform được diễn ra như thế nào nên snapshot này chưa đúng:
+
+```js
+/**
+ * @type {import('@jest/globals').describe}
+ */
+describe('tại global scope', () => {
+  it('Nên hiển thị hello babel', () => {
+    const code = `inspect('hello babel');`
+    const output = babel.transformSync(code, opts)
+    expect(output.code).toMatchInlineSnapshot(`
+""use strict";
+
+inspect('hello babel');"
+`)
+  })
+})
+```
+
+Nhìn vào snapshot được jest tạo ra **inline**. Nó không khác với những gì ta viết. Chúng ta cần transform nó từ
+
+```js
+inspect('hello babel')
+```
+
+thành:
+
+```js
+console.log('inspect', 'hello babel')
+```
+
+Copy template plugin ở bài trước và thêm key "CallExpression" vô cho visitor. Như cái tên nói lên rõ nghĩa, ta đang gọi hàm inspect mà. Bất kì lời gọi hàm nào cũng sẽ được xử lí ở CallExpress nên ta cần lọc xuống, cái nào có tên là `inspect` thì giữ lại, còn không ta return về cho sớm.
+
+**Note**:
+Việc lựa chọn viết trước code test hay code plugin là tuỳ mỗi người. Thứ tự nào cũng okay. Trên thực tế bạn sẽ quen với một cái. Việc luyện tập theo chiều ngược lại giúp bạn trong việc viết code đỡ nhàm chán. Không tin thì hãy thử áp dụng nhé.
+
+Để giải quyết bài test này, ta cần coi cú pháp được parse thông qua trang [AST explorer](https://astexplorer.net/). Nhập mã `inspect('hello babel')` vào trong textfield bên trái để thấy kết quả parser bên phải.
+
+Tôi sẽ viết code giả định để dễ hình dung:
+
+```js
+
+CallExpression() {
+  if (Hàm gọi là inspect) {
+	  return
+  }
+  if (danh_sách_tham_số.length === 0) {
+	  return
+  }
+  let cờ = 'inspect'
+  const danh_sách_tham_số_mong_muốn = [cờ, ...danh sách tham số]
+
+  // thay đổi inspect thành console.log
+  cập_nhật_Hàm_Gọi('console.log')
+  // thay đổi danh sách tham số với cờ
+  thay_Thế_Tham_Số(danh_sách_tham_số_mong_muốn)
+},
+```
+
+
+Thế này tôi nghĩ sẽ dễ hiểu. Giờ ta bắt đầu đi vào từng đoạn. Bắt đầu với:
+
+```js
+if (Hàm gọi là inspect) {
+  return
+}
+```
+
+thực tế sẽ là:
+
+```js
+if (
+  !(
+    t.isIdentifier(path.node.callee) &&
+    path.node.callee.name === 'inspect'
+  )
+) {
+  return
+}
+```
+
+Dựa vào AST Explorer, bạn cần kiểm tra hàm gọi (callee) phải là Identifier và tên của nó là inspect, rồi thêm dấu chấm than để phủ định. Nó có nghĩa nếu callee không phải Identifier hoặc name không phải 'inspect' thì máy nên bỏ qua.
+
+![b434144dbdde0e3a2708113a9e912875.png](:/bc42a4aef9484be188dc85f8e5c7f200)
+
+**Note**
+Khi hover vào giá trị bên phải, sẽ highlight phần tương ứng ở phía bên trái là hàm gọi inspect.
+
+Tới phần kế tiếp:
+
+```js
+if (danh_sách_tham_số.length === 0) {
+  return
+}
+```
+
+Thực tế sẽ là:
+
+```js
+if (path.node.arguments.length === 0) {
+  return
+}
+```
+
+Ở đây thì dễ hiểu rồi ha, ta kiểm tra số lượng tham số nếu bằng 0 thì máy hãy bỏ qua.
+
+Sang phần tiếp theo:
+
+```js
+let cờ = 'inspect'
+const danh_sách_tham_số_mong_muốn = [cờ, ...danh sách tham số]
+```
+
+Thực tế là:
+
+```js
+let flag = 'inspect'
+const args = [t.stringLiteral(flag), ...path.node.arguments]
+```
+
+Nó cũng dễ hiểu. Ta đặt chuỗi `'inspect'` vào trong hàm stringLiteral. Đây là bắt buộc để babel hiểu được, nếu chỉ bỏ chuỗi vào trong mảng thì nó không hiểu. Và ta cũng lấy các tham số khác đưa vào mảng các tham số mong muốn
+
+Sang phần tiếp:
+
+```js
+// thay đổi inspect thành console.log
+cập_nhật_Hàm_Gọi('console.log')
+// thay đổi danh sách tham số với cờ
+thay_Thế_Tham_Số(danh_sách_tham_số_mong_muốn)
+```
+
+Thực tế sẽ là:
+
+```js
+path.node.callee = t.memberExpression(
+  t.identifier('console'),
+  t.identifier('log')
+)
+path.node.arguments = args
+```
+
+Ta sẽ dùng toán tử gán (dấu bằng) để cập nhật tên hàm gọi là console.log và tham số mong muốn.
+
+Tại sao lại là memberExpression? Lại dựa vào AST explorer, dán câu lệnh `console.log('hello babel')` vào trong trường nhập. Lưu ý, hãy hover tới chỗ bạn muốn xem cú pháp được phân tích nhé. Ở đây là callee
+
+![9286b91663460cff9f69d27d1ed3c621.png](:/33ed9472cf6d4025a3e700e70fae2b2e)
+
+Ta thấy có hai thứ là object và property với name tương ứng là console và log. Trong hình bạn có thể thấy giá trị các type là MemberExpression, Indentifier ứng với code trên chưa? Nếu chưa thì coi kĩ một lần nữa.
+
+Mã sau khi giải thích sẽ là như thế này:
+
+```js
+/**
+ * @param {import('@babel/core')} babel
+ * @returns {import('@babel/core').PluginObj}
+ */
+module.exports = function (babel) {
+  const t = babel.types
+  return {
+    visitor: {
+      CallExpression(path) {
+        // nhắm tới hàm gọi - callee không phải là inspect
+        if (
+          !(
+            t.isIdentifier(path.node.callee) &&
+            path.node.callee.name === 'inspect'
+          )
+        ) {
+          return
+        }
+        if (path.node.arguments.length === 0) {
+          return
+        }
+        let flag = 'inspect'
+        const args = [t.stringLiteral(flag), ...path.node.arguments]
+        path.node.callee = t.memberExpression(
+          t.identifier('console'),
+          t.identifier('log')
+        )
+        path.node.arguments = args
+      },
+    },
+  }
+}
+```
+
+Lưu file và kiểm tra ở terminal, jest báo lỗi:
+
+![c19d428aa8c3d3f7ad86e799e715de79.png](:/5a949bd11ac140b2bd71090dae7ca1e2)
+
+Nó báo snapshot đã có sự thay đổi, không còn `inspect('hello babel')` nữa mà thay bởi `console.log('inspect', 'hello babel')`.
+
+Sau khi xác định đây là snapshot ta mong muốn, hãy bấm phím **u** để jest update inline snapshot trong file test của chúng ta.
+
+**note**:
+Trong jest
+u - update snapshot
+
+Kết quả ở file test:
+
+```js
+/**
+ * @type {import('@jest/globals').describe}
+ */
+describe('tại global scope', () => {
+  it('Nên hiển thị hello babel', () => {
+    const code = `inspect('hello babel');`
+    const output = babel.transformSync(code, opts)
+    expect(output.code).toMatchInlineSnapshot(`
+""use strict";
+
+console.log("inspect", 'hello babel');"
+`)
+  })
+})
+```
+
+**Note**:
+Khi dùng git chúng ta sẽ commit cả file test.js nữa. Giúp ta thấy sự thay đổi trong snapshot và đảm bảo việc test code và review code là chính xác.
+
+Sau khi đảm bảo code test thành công, chúng ta có thể chạy chương trình ở mode develop và sau nữa là production. Scripts được qui định trong package.json
+
+Đó là tất cả nội dung cho bài viết hôm nay. Bạn biết cách viết test với snapshot và hiểu code để qua được bài test thông qua mã giả định và dựa vào AST Explorer để viết mã thật. Qua đó ta sẽ đi viết các bài test khác, để chương trình hoạt động thật tốt. Cám ơn các bạn đã đọc bài.
