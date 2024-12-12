@@ -36,11 +36,11 @@ Tôi lựa chọn Jest làm công cụ test bởi sự phổ biến. Và sử d�
 Thêm vào package.json script:
 
 ```json
-"scripts": {tét
-        "test": "jest --watch",
-        "dev": "webpack-dev-server --config webpack.config.development.cjs",
-        "build": "cross-env NODE_ENV=production webpack --mode production --config webpack.config.production.cjs"
-},
+"scripts": {
+    "test": "jest --watch",
+    "dev": "webpack-dev-server --config webpack.config.development.cjs",
+    "build": "cross-env NODE_ENV=production webpack --mode production --config webpack.config.production.cjs"
+}
 ```
 
 Từ đây hãy thực thi lệnh `npm run test` để thực thi jest ở watch mode. Nó sẽ báo là chúng ta cần ít nhất một file có đuôi `.test.js`. 
@@ -153,7 +153,7 @@ if (
 
 Dựa vào AST Explorer, bạn cần kiểm tra hàm gọi (callee) phải là Identifier và tên của nó là inspect, rồi thêm dấu chấm than để phủ định. Nó có nghĩa nếu callee không phải Identifier hoặc name không phải 'inspect' thì máy nên bỏ qua.
 
-![b434144dbdde0e3a2708113a9e912875.png](:/bc42a4aef9484be188dc85f8e5c7f200)
+![b434144dbdde0e3a2708113a9e912875.png](/static/images/ddccc1dc-5693-4cd2-a251-af652ecb2aa5/bc42a4aef9484be188dc85f8e5c7f200.jpeg)
 
 **Note**
 Khi hover vào giá trị bên phải, sẽ highlight phần tương ứng ở phía bên trái là hàm gọi inspect.
@@ -215,7 +215,7 @@ Ta sẽ dùng toán tử gán (dấu bằng) để cập nhật tên hàm gọi 
 
 Tại sao lại là memberExpression? Lại dựa vào AST explorer, dán câu lệnh `console.log('hello babel')` vào trong trường nhập. Lưu ý, hãy hover tới chỗ bạn muốn xem cú pháp được phân tích nhé. Ở đây là callee
 
-![9286b91663460cff9f69d27d1ed3c621.png](:/33ed9472cf6d4025a3e700e70fae2b2e)
+![9286b91663460cff9f69d27d1ed3c621.png](/static/images/ddccc1dc-5693-4cd2-a251-af652ecb2aa5/33ed9472cf6d4025a3e700e70fae2b2e.jpeg)
 
 Ta thấy có hai thứ là object và property với name tương ứng là console và log. Trong hình bạn có thể thấy giá trị các type là MemberExpression, Indentifier ứng với code trên chưa? Nếu chưa thì coi kĩ một lần nữa.
 
@@ -258,7 +258,7 @@ module.exports = function (babel) {
 
 Lưu file và kiểm tra ở terminal, jest báo lỗi:
 
-![c19d428aa8c3d3f7ad86e799e715de79.png](:/5a949bd11ac140b2bd71090dae7ca1e2)
+![c19d428aa8c3d3f7ad86e799e715de79.png](/static/images/ddccc1dc-5693-4cd2-a251-af652ecb2aa5/5a949bd11ac140b2bd71090dae7ca1e2.jpeg)
 
 Nó báo snapshot đã có sự thay đổi, không còn `inspect('hello babel')` nữa mà thay bởi `console.log('inspect', 'hello babel')`.
 
