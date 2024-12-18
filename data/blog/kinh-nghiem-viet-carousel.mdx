@@ -1,0 +1,106 @@
+---
+title: Kinh nghiệm viết chương trình Carousel
+date: '2024-12-18'
+tags: ['react', 'animation']
+draft: false
+summary: Bài viết là những trải nghiệm khi đi xây dựng chương trình Carousel bằng React với những điểu mới học được và đặc biệt là hướng đi sai lầm khi thao tác DOM trực tiếp dẫn tới nhiều lúc bối rối và mất phương hướng.
+---
+
+Tôi tiến hành bằng việc dựa theo code trong bài viết để chuyển sang react. Bước đầu tiên là định nghĩa 2 component là CarouselParent và CarouselItem.
+
+CarouselParent là component chưa logic của carousel, CarouselItem chỉ hoàn toàn là html cho giao diện cho các thành phần con của carousel.
+
+Bước tiếp cận là sử dụng useRef, sau đó xử lí các logic trực tiếp theo DOM. Cách tiếp cận này làm tôi thấy thực sự bối rối. Bởi cách React xử lí theo state. Dẫn tôi có chỗ tôi định nghĩa useState và useRef. Điều này vô tình làm mọi thứ trở nên rắc rối. Bản chất là tôi đang đi xử lí bằng DOM, điều mà tôi nhiều lúc không nhận ra. Trước đây tôi cũng gặp một tình huống tương tự khi thực hành với visual scroll. Vì là xử lí bằng DOM nên thủ công nhất là dùng DOM API. Sau đó, tôi cài thêm 1 thư viện gần giống với jQuery. Và vẫn cảm thấy không ổn ở chỗ nào đó.
+
+Chỉ khi tôi nghĩ là sao không thử chỉ sử dụng data là danh sách các item, bỏ đi component CarouselItem. Duyệt từng phần tử trong danh sách để tạo ra các thẻ con. Điều này tạo 1 chút dễ dàng hơn để xử lí logic cho carousel. Dù lúc này mọi thứ chưa rõ ràng lắm đâu. Tuy nhiên cứ thử clone ra một component mới để làm. Và từ từ tính tiếp. Rất may giống như là gãi đúng chỗ ngứa, mọi thứ diễn ra rất trôi chảy sau đó.
+
+Cốt lõi của component carousel được qui định bởi prop 'items' và các state bên trong như chỉ mục 'current' và 'isAnimation'.
+
+Các chỉ mục khác được xác định dựa trên chỉ mục 'current' là 'left, right, next, prev'.
+
+Còn biến cờ 'isAnimation' giúp đảm bảo khi đang animation diễn ra việc di chuyển carousel bằng cách click vào nút trước và sau là không có tác dụng. Chỉ khi nó được tắt thông qua sự kiện 'onTransitionEnd' xảy ra. Lúc này tất cả thẻ con với class `.re-carousel-item` hoàn tất animation, ta sẽ tắt biến cờ.
+
+Khi bạn bấm cái nút prev và next, ta thay đổi vị trí của thẻ 'current' và dĩ nhiên các thẻ 'left, right, prev, next' cũng được xác định sau đó. Cũng tại đây, biến cờ được bật.
+
+Mã sau thể hiện những gì được mô tả phía trên:
+
+```tsx
+const _getCoordinates = (position: string): React.CSSProperties => {
+    switch (position) {
+      case 'out':
+        return {
+          opacity: 0,
+          visibility: 'hidden',
+        }
+      case 'outleft':
+        return {
+          transform: 'translateX(-450px) translateZ(-300px) rotateY(45deg)',
+          opacity: 0,
+          visibility: 'hidden',
+        }
+      case 'outright':
+        return {
+          transform: 'translateX(450px) translateZ(-300px) rotateY(-45deg)',
+          opacity: 0,
+          visibility: 'hidden',
+        }
+      case 'left':
+        return {
+          transform: 'translateX(-350px) translateZ(-200px) rotateY(45deg)',
+          opacity: 1,
+          visibility: 'visible',
+        }
+      case 'right':
+        return {
+          transform: 'translateX(350px) translateZ(-200px) rotateY(-45deg)',
+          opacity: 1,
+          visibility: 'visible',
+        }
+      case 'center':
+      default:
+        return {
+          opacity: 1,
+          visibility: 'visible',
+        }
+	}
+}
+  
+const _navigate = (direction: string) => {
+    if (isAnimation) return
+    setIsAnimation(true)
+    switch (direction) {
+      case 'next':
+        setCurrent((prev) => {
+          return prev === items.length - 1 ? 0 : prev + 1
+        })
+        break
+      case 'prev':
+        setCurrent((prev) => {
+          return prev === 0 ? items.length - 1 : prev - 1
+        })
+        break
+    }
+  }
+
+  const handlePrev = () => {
+    _navigate('prev')
+  }
+  const handleNext = () => {
+    _navigate('next')
+  }
+  const onTransitionEnd = () => {
+    setIsAnimation(false)
+  }
+```
+
+Những điều phát hiện thêm:
+
+1. Có bao nhiều .re-wrapper?
+  - 1
+2. Ngoài z-index để sắp xếp thứ tự xếp chồng của các thẻ. Ta có thể sử dụng translate 3D, cụ thể là translateZ
+
+- translateZ tăng nhìn sẽ to ra, giảm thì nhỏ lại
+- rotate có thể đảo chiều hình (flip), 90deg nhìn vô hình. Chú ý khi kết hợp với các thuộc tính khác như translateZ, translateX sẽ khác.
+- 
+
+
