@@ -1,0 +1,121 @@
+---
+title: Tạo bảng lưu thông tin khách hàng trong ngày ở khách sạn
+date: '2025-02-1'
+tags: ['luyện tập css']
+draft: false
+summary:
+---
+
+Đây là một ví dụ giả định về khách sạn có 22 phòng gồm 2 dãy B và C với số phòng ở mỗi dãy lần lượt lượt 10 và 12. Ta sẽ tạo bảng gồm 22 phòng với mỗi dãy là một hàng. Kết quả sẽ như sau:
+
+<SimpleGallery
+  galleryID="gallery-1"
+  images={[
+    {
+      largeURL:
+        '/static/images/7907ad9a-c285-4147-9944-ea093535fddb/98ab6dea465144a892ec39a2df8eb64b.png',
+      thumbnailURL:
+        '/static/images/7907ad9a-c285-4147-9944-ea093535fddb/98ab6dea465144a892ec39a2df8eb64b.png',
+      width: 1920,
+      height: 1269,
+      alt: 'bang-tinh-trang-phong-khach-san',
+    },
+  ]}
+/>
+
+Thêm code sau vào trong file CSS hoặc thẻ head > style ở trong file html:
+
+```css
+.page {
+  display: flex;
+  flex-direction: column;
+}
+.sheet {
+  width: 1280px;
+  border: 1px solid black;
+  background: #fff;
+}
+.row {
+  display: flex;
+}
+.cell {
+  border: 1px solid black;
+  flex: 1 0 0px;
+}
+.cell.head {
+  display: grid;
+  place-content: center;
+}
+
+.cell:not(.head) {
+  min-height: 350px;
+}
+.title {
+  font-size: 20px;
+  margin-bottom: 8px;
+  margin-left: 16px;
+  margin-top: 8px;
+}
+```
+
+Chúng tôi sử dụng cấu trục html như sau để thể hiện các cell:
+
+```html
+<section class='page'>
+      <div class='title'>&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp; / 2025</div>
+      <div class='sheet'>
+        <div class='row'>
+          <div class='cell head'>C1</div>
+          <div class='cell head'>C2</div>
+          <div class='cell head'>C3</div>
+          <div class='cell head'>C4</div>
+          <div class='cell head'>C5</div>
+          <div class='cell head'>C6</div>
+          <div class='cell head'>C7</div>
+          <div class='cell head'>C8</div>
+          <div class='cell head'>C9</div>
+          <div class='cell head'>C10</div>
+          <div class='cell head'>C11</div>
+          <div class='cell head'>C12</div>
+        </div>
+        <div class='row'>
+          <div class='cell'></div>
+          <div class='cell'></div>
+          <div class='cell'></div>
+          <div class='cell'></div>
+          <div class='cell'></div>
+          <div class='cell'></div>
+          <div class='cell'></div>
+          <div class='cell'></div>
+          <div class='cell'></div>
+          <div class='cell'></div>
+          <div class='cell'></div>
+          <div class='cell'></div>
+        </div>
+        <div class='row'>
+          <div class='cell head'>B1</div>
+          <div class='cell head'>B2</div>
+          <div class='cell head'>B3</div>
+          <div class='cell head'>B4</div>
+          <div class='cell head'>B5</div>
+          <div class='cell head'>B6</div>
+          <div class='cell head'>B7</div>
+          <div class='cell head'>B8</div>
+          <div class='cell head'>B9</div>
+          <div class='cell head'>B10</div>
+        </div>
+        <div class='row'>
+          <div class='cell'></div>
+          <div class='cell'></div>
+          <div class='cell'></div>
+          <div class='cell'></div>
+          <div class='cell'></div>
+          <div class='cell'></div>
+          <div class='cell'></div>
+          <div class='cell'></div>
+          <div class='cell'></div>
+          <div class='cell'></div>
+        </div>
+      </div>
+    </section>
+```
