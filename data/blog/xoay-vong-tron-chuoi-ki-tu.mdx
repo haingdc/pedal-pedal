@@ -1,0 +1,43 @@
+---
+title: Xoay vòng tròn chuỗi kí tự
+date: '2025-02-4'
+tags: ['luyện tập css']
+draft: false
+summary:
+---
+
+[source code](https://github.com/haingdc/circle-benard)
+
+![spinCircle.gif](/static/images/650aec46-fe0f-4f26-8dce-1ee0503f26c9/2379ac1449f743a19c6a5405743af00f.gif)
+
+
+Để xoay vòng từng thẻ ta sẽ sử dụng thuộc tính `transform`. Hiện tại, transform cung cấp các khả năng là translate, rotate, skew, scale. Ta sẽ sử dụng rotate để điều chỉnh góc của từng kí tự.
+
+```css
+transform: rorate(60deg)
+```
+
+Với mỗi kí tự ta sẽ thiết lập `position: absolute` và qui định các giá top, right, bottom, left bằng 0 để mỗi kí tự có kích thước với với chính thẻ cha.
+
+Mỗi điều nữa cũng không kém phần quan trọng là để thuộc tính `text-align: center`. Nhờ text-align ta có thể đảm bảo các kí tự xoay đối xứng với nhau theo 1 vòng tròn.
+
+Tiếp theo ta sẽ tạo keyframes để tên là spinCircle:
+
+```css
+@keyframes spinCircle {
+  0% {
+    transform: rotateZ(360deg);
+  }
+  100% {
+    transform: rotateZ(0deg);
+  }
+}
+```
+
+Ở thẻ cha ta sẽ sử dụng thuộc tính animation với giá trị là spinCircle:
+
+```css
+  animation: spinCircle 20s linear infinite;
+```
+
+các giá trị đi kèm là linear và infinite để yêu cầu quá trình animation diễn ra ở nhịp đều đặn và lặp lại vô tận.
