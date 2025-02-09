@@ -1,0 +1,97 @@
+---
+title: Tạo form đơn giản
+date: '2025-02-9'
+tags: ['luyện tập css']
+draft: false
+summary: Tạo form đăng ký đơn giản bằng CSS
+---
+
+![c295a267ac8db702694bf29fae3224dd.png](/static/images/93638851-5a6c-4cd7-8532-4e820544ad3e/dd809d685bb14a3484550d21f391474e.png)
+
+Hôm nay là chủ nhật, tranh thủ thời gian và cũng vì lâu quá không code thường xuyên, nay có dịp nên ngồi tạo một form đăng ký đơn giản để ôn lại kiến thức. Bắt đầu bằng cấu trúc các thành phần có trong form:
+
+```html
+<div class='registration'>
+  <form>
+    <label>Your email</label>
+    <input type='text' />
+    <p class='error'>
+      <span>This email exists already in the database</span>
+    </p>
+    <label>Password</label>
+    <input type='password' />
+    <p class='error'>
+      <span>At least 6 characters</span>
+    </p>
+    <label>Password [Repeat]</label>
+    <input type='password' />
+    <p class='error'>
+      <span>Passwords do not match</span>
+    </p>
+    <label>Year of birth</label>
+    <input type='text' />
+    <p class='error'>
+      <span>Some text here</span>
+    </p>
+    <label>Country</label>
+    <select name='country'>
+      <option>Country 1</option>
+      <option>Country 2</option>
+    </select>
+    <button type='submit'>Register</button>
+  </form>
+</div>
+```
+
+Sau đó thêm vào style:
+
+```css
+.registration form {
+  display: flex;
+  flex-direction: column;
+  text-transform: uppercase;
+  padding: 16px;
+  background-color: black;
+  border-radius: 8px;
+  width: 450px;
+  --background: red;
+}
+
+.registration form label {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #fff;
+}
+
+.registration .error {
+  color: rgb(255, 191, 0);
+  font-size: 12px;
+  text-transform: initial;
+  align-self: flex-end;
+  margin-top: 6px;
+}
+.registration form input,
+.registration form select {
+  background-color: #fff;
+  outline: none;
+  padding: 4px 6px;
+}
+.registration form input:focus {
+  color: #fff;
+}
+.registration form input:focus {
+  background-color: var(--background);
+}
+.registration button[type='submit'] {
+  margin-top: 16px;
+  background-color: var(--background);
+  color: #fff;
+  border-radius: 8px;
+  padding: 4px 16px;
+  align-self: center;
+  font-size: 32px;
+  font-weight: bold;
+  cursor: pointer;
+}
+```
