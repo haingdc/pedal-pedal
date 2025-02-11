@@ -1,0 +1,114 @@
+---
+title: Tạo Tag label đơn giản
+date: '2025-02-11'
+tags: ['luyện tập css']
+draft: false
+summary: Tag label được sử dụng để bổ sung thông tin tóm tắt cho một các bài viết. Nó làm đẹp cho việc hiển thị với nhiều màu sắc, nội dung có thể là chủ đề mà bài viết liên quan tới. Hôm nay ta hãy tạo giao diện cho các tag.
+---
+
+![930d33b419be7d02dbec25f8e19e1a96.png](/static/images/2449616a-7cb7-41d8-b4cd-4339fc351b87/8da26127bf5d46a1b76b39bbd4c0f681.png)
+
+Một tag sẽ có cấu tạo như sau:
+
+```html
+<div className="w3-tag w3-blue"><span>blue label</span><a href="#"></a></div>
+```
+
+Sau đó ta qui định style cho chúng. Với class cho tag mặc định, class cho các màu sắc, class qui định kích thước:
+
+
+```css
+.w3-badge,
+.w3-tag {
+  background-color: #000;
+  color: #fff;
+  display: inline-block;
+  padding-left: 8px;
+  padding-right: 8px;
+  text-align: center;
+  border-radius: 4px;
+}
+.w3-badge {
+  border-radius: 50%;
+}
+
+.w3-xlarge {
+  font-size: 24px !important;
+}
+.w3-xxlarge {
+  font-size: 36px !important;
+}
+.w3-xxxlarge {
+  font-size: 48px !important;
+}
+.w3-jumbo {
+  font-size: 64px !important;
+}
+
+.w3-pink {
+  background-color: #f1a9e7;
+}
+.w3-lightblue {
+  background-color: #99ccff;
+}
+.w3-blue {
+  background-color: #3019ff;
+}
+.w3-olive {
+  background-color: #cccc66;
+}
+.w3-green {
+  background-color: #37b700;
+}
+.w3-brown {
+  background-color: #c5ad98;
+}
+.w3-violet {
+  background-color: #cea6ce;
+}
+.w3-turk {
+  background-color: #8fcdb6;
+}
+.w3-red {
+  background-color: #ee998a;
+}
+.w3-orange {
+  background-color: #ff9e28;
+}
+.w3-lime {
+  background-color: #b6ff00;
+}
+.w3-darkblue {
+  background-color: #21007f;
+}
+.w3-leaf {
+  background-color: #00cc00;
+}
+.w3-yellow {
+  background-color: #ffff00;
+}
+.w3-autumn {
+  background-color: #b24700;
+}
+.w3-frost {
+  background-color: #80c8fe;
+}
+.w3-purple {
+  background-color: #8e006b;
+}
+.w3-black {
+  background-color: #000;
+}
+
+.w3-spin {
+  animation: w3-spin 2s infinite linear;
+}
+@keyframes w3-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(359deg);
+  }
+}
+```
