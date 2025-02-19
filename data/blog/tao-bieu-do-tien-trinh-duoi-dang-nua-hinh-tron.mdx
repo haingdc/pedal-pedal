@@ -1,0 +1,222 @@
+---
+title: Tạo biểu đồ tiến trình dưới dạng nửa đường tròn
+date: '2025-02-19'
+tags: ['chart', 'progress bar', 'luyện tập css']
+draft: false
+summary:
+---
+
+![screenshot](/static/images/5d2e5abd-a32a-4c7c-863d-78b747236fee/18d651b5ad4a44cf8861df1fc06233b0.png)
+
+[Demo](https://haingdc.github.io/chart-haft-circle-live-reload/)
+[source code](https://github.com/haingdc/chart-haft-circle-live-reload)
+
+Ở bài này tôi có giao diện là thành phần bao gồm tiêu đề với màu đen, phần mô tả màu xám nhạt, tỉ lệ phần trăm hiện tại cùng với 1 biểu đồ tiến trình.
+
+cấu trúc HTML:
+
+```html
+<div class="thong-ke-ti-le">
+      <div class="item" style="--color : #4a9db4">
+        <div class="head">
+          <div class="head__icon"></div>
+          <div class="head__value">Level Activity</div>
+        </div>
+        <div class="sub-head">Your General Goal Achievements</div>
+        <div class="section">
+          <div class="value">38%</div>
+          <div class="chart">
+            <div class='semi-donut' style="--fill : var(--color) ; --percentage : 38">
+              <span class='label'>
+                <svg width='15' height='15' viewBox='0 0 15 15' fill='none' xmlns='http://www.w3.org/2000/svg'>
+                  <path d='M4 9H11L7.5 4.5L4 9Z' fill='#08bd08'></path>
+                </svg>
+                10%
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="separator"></div>
+      <div class="item" style="--color : #e65953">
+        <div class="head">
+          <div class="head__icon"></div>
+          <div class="head__value">Success Endurance</div>
+        </div>
+        <div class="sub-head">Your General Endurance success</div>
+        <div class="section">
+          <div class="value">54%</div>
+          <div class="chart">
+            <div class='semi-donut' style="--fill : var(--color) ; --percentage : 54">
+              <span class='label'>
+                <svg width='15' height='15' viewBox='0 0 15 15' fill='none' xmlns='http://www.w3.org/2000/svg'>
+                  <path d='M4 6H11L7.5 10.5L4 6Z' fill='#e65953'></path>
+                </svg>
+                5%
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+```
+
+```css
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+    @layer default {
+      body {
+        background-color: #efefef;
+      }
+    }
+
+    @layer my-components {
+      .thong-ke-ti-le {
+        font-family: Nunito;
+        font-display: swap;
+        container-type: inline-size;
+        max-width: 440px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        border-radius: 20px;
+        background-color: #fff;
+        padding: 8px;
+
+        .item {
+          padding: 8px 8px;
+
+          .head {
+            font-size: 16px;
+            color: #000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+
+          .sub-head {
+            font-size: 14px;
+            margin-top: 4px;
+            color: #4f4b4b;
+            font-weight: normal;
+          }
+
+          .section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+          }
+
+          .value {
+            font-size: 42px;
+            line-height: 0.7;
+            color: #000;
+          }
+
+          .head__icon {
+            border: 5px solid;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            border-color: var(--color);
+          }
+
+          .head__value {
+            font-weight: bold;
+          }
+        }
+
+        .separator {
+          height: 1px;
+          background-color: #c3c3c3;
+          margin: 0 8px;
+        }
+      }
+
+      @container (min-width: 600px) {
+        .thong-ke-ti-le {
+          .item {
+            .head {
+              font-size: 20px;
+            }
+          }
+        }
+      }
+    }
+
+    .semi-donut {
+      width: var(--width);
+      height: var(--height);
+      position: relative;
+      color: #fff;
+      font-size: 20px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      box-sizing: border-box;
+      overflow: hidden;
+      --percentage: 0;
+      --fill: #00ACC1;
+      --width: 200px;
+      --height: 100px;
+      --background: #f0f0f0;
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: var(--width);
+        height: calc(var(--height) * 2);
+        border: 24px solid;
+        border-color: var(--background) var(--background) var(--fill) var(--fill);
+        border-radius: 50%;
+        transform: rotate(calc(1deg * (-45 + var(--percentage) * 1.8)));
+        box-sizing: border-box;
+        animation: fillAnimation 1s ease-in;
+      }
+
+      .label {
+        color: #1e1c1c;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        svg {
+          width: 24px;
+          height: 24px;
+          color: #08bd08;
+        }
+      }
+    }
+
+    @keyframes fillAnimation {
+      0% {
+        transform: rotate(-45deg);
+      }
+
+      50% {
+        transform: rotate(135deg);
+      }
+    }
+
+    @keyframes fillGraphAnimation {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      50% {
+        transform: rotate(180deg);
+      }
+    }
+```
+
+Ví dụ này tạo 2 hiệu ứng animation lần lượt là fillAnimation và fillGraphAnimation.
+
+fillAnimation:
+
+![fillAnimation](/static/images/5d2e5abd-a32a-4c7c-863d-78b747236fee/fillAnimation.gif)
+
+fillGraphAnimation:
+
+![fillGraphAnimation](/static/images/5d2e5abd-a32a-4c7c-863d-78b747236fee/fillGraphAnimation.gif)
