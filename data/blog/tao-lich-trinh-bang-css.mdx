@@ -1,0 +1,173 @@
+---
+title: Tạo lịch trình bằng CSS
+date: '2025-02-21'
+tags: ['luyện tập css']
+draft: false
+summary:
+---
+
+![d0086e0fa5a2d8b88e1f6277d7336032.png](/static/images/55450068-aeef-48d9-84c8-c2dd83d5d121/c61ba230a24d4f068220f636320d2cf9.png)
+
+[Demo](https://haingdc.github.io/schedule/)
+[Source code](https://github.com/haingdc/schedule)
+
+Hôm nay chúng ta có một ví dụ đơn giản tạo lịch trình dạng bảng gồm cột thời gian và công việc tương ứng với từng thời điểm:
+
+```html
+<div class="container">
+  <div class="schedule">
+    <div class="schedule--header">
+      <div class="label">
+        schedule
+      </div>
+      <div class="value">19<sup>th</sup> February 2025</div>
+      <div class="else"></div>
+    </div>
+    <div class="schedule--table">
+      <div class="header">Time</div>
+      <div class="cell--key">08:00 - 08:30</div>
+      <div class="cell--value">
+        <div class="text">Welcome guests</div>
+      </div>
+      <div class="cell--key">08:30 - 08:45</div>
+      <div class="cell--value">
+        Opening session
+      </div>
+      <div class="cell--key">08:45 - 09:30</div>
+      <div class="cell--value">
+        <div class="text bold italic">Building Authentic Voices for Global Students</div>
+        <div class="text">By Andrew Duenas</div>
+      </div>
+
+      <div class="cell--key">09:30 - 10:15</div>
+      <div class="cell--value">
+        <div class="text bold italic">Empowering English Language Learners via Authentic Materials</div>
+        <div class="text">By Dr. Tran Quoc Thao</div>
+      </div>
+      <div class="cell--key">10:15 - 10:30</div>
+      <div class="cell--value">
+        <div class="text">Break</div>
+      </div>
+
+      <div class="cell--key">10:30 - 11:30</div>
+      <div class="cell--value">
+        <div class="text bold italic">How to Develop Original Thinking in Students' Communication</div>
+        <div class="text">By Dr. Nguyen Chi Hieu</div>
+      </div>
+
+      <div class="cell--key">11:35 - 11:45</div>
+      <div class="cell--value">
+        <div class="text">Introducing <span class="bold">National Geographic Learning Program: Voices</span></div>
+        <div class="text">By Andrew Duenas</div>
+      </div>
+
+      <div class="cell--key">11:45 - 12:00</div>
+      <div class="cell--value">
+        <div class="text">Q&A</div>
+        <div class="text">Survey and lucky draw</div>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+Và CSS:
+
+```css
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+@layer default {
+  body {
+    background-color: #fff;
+    font-family: Nunito;
+  }
+}
+
+@layer my-components {
+  .container {
+    container-type: inline-size;
+  }
+
+  .row {
+    display: flex;
+  }
+
+  .schedule {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 800px;
+
+    .label {
+      font-size: 24px;
+      line-height: 32px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .text {
+      font-size: 16px;
+    }
+
+    .bold {
+      font-weight: bold;
+    }
+
+    .italic {
+      font-style: italic;
+    }
+
+    .schedule--header {
+      display: flex;
+
+      .label {
+        padding-right: 32px;
+      }
+
+      .value {
+        background-color: #000;
+        color: #fff;
+        padding: 4px 32px;
+        font-size: 16px;
+        font-weight: bold;
+      }
+
+      .else {
+        flex: 1;
+        background-color: #fed700;
+        border-radius: 0 36px 0 0;
+      }
+    }
+
+    .schedule--table {
+      display: grid;
+      grid-template-columns: auto 1fr;
+
+      .header {
+        grid-column: 1 / 3;
+        background-color: #000;
+        color: #fff;
+        padding: 4px 40px;
+        font-size: 20px;
+      }
+
+      .cell--key,
+      .cell--value {
+        border-left: 1px solid #000;
+        border-bottom: 1px solid #000;
+      }
+
+      .cell--key {
+        background-color: #e6e7e9;
+        color: #000;
+        padding: 8px 20px;
+      }
+
+      .cell--value {
+        padding: 8px 16px;
+      }
+    }
+  }
+}
+```
+
