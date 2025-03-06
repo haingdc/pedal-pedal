@@ -1,43 +1,56 @@
 ---
-title: Xoay vòng tròn chuỗi kí tự
-date: '2025-02-4'
-tags: ['luyện tập css']
+title: Giải quyết vấn đề commit lộn vô nhánh chính
+date: '2025-03-6'
+tags: ['fixing bỏ túi', 'git']
 draft: false
-summary:
+summary: Trong quá trình làm dự án, do bận rộn bởi nhiều thông tin mà ta vô tình commit trên nhánh chính. Bài viết này hướng dẫn cách khắc phục sơ suất này
 ---
 
-[source code](https://github.com/haingdc/circle-benard)
+Có tình huống do không để ý, đáng nhẽ chúng ta làm ở nhánh `feature` và sẽ tạo commit. Rồi từ đó tạo merge request lên nhánh `main`. Tuy nhiên khi commit xong mới để ý là ta mới ngớ ra:
 
-![spinCircle.gif](/static/images/650aec46-fe0f-4f26-8dce-1ee0503f26c9/2379ac1449f743a19c6a5405743af00f.gif)
+- Ô mình commit vô main à!?
 
+Để giải quyết hãy thực hiện bước sau:
 
-Để xoay vòng từng thẻ ta sẽ sử dụng thuộc tính `transform`. Hiện tại, transform cung cấp các khả năng là translate, rotate, skew, scale. Ta sẽ sử dụng rotate để điều chỉnh góc của từng kí tự.
+1. Tạo nhánh feature mới nếu bạn chưa tao
 
-```css
-transform: rorate(60deg)
+```terminal
+git checkout main
+git pull origin main # Đảm bảo rằng bạn ở phiên bản mới nhất
+git checkout -b feature # Tạo nhánh feature mới
 ```
 
-Với mỗi kí tự ta sẽ thiết lập `position: absolute` và qui định các giá top, right, bottom, left bằng 0 để mỗi kí tự có kích thước với với chính thẻ cha.
+2. Chuyển code từ `main` -> `feature`
 
-Mỗi điều nữa cũng không kém phần quan trọng là để thuộc tính `text-align: center`. Nhờ text-align ta có thể đảm bảo các kí tự xoay đối xứng với nhau theo 1 vòng tròn.
-
-Tiếp theo ta sẽ tạo keyframes để tên là spinCircle:
-
-```css
-@keyframes spinCircle {
-  0% {
-    transform: rotateZ(360deg);
-  }
-  100% {
-    transform: rotateZ(0deg);
-  }
-}
+```terminal
+git cherry-pick <comit-hash>
 ```
 
-Ở thẻ cha ta sẽ sử dụng thuộc tính animation với giá trị là spinCircle:
+Thay `<commit-hash>` bằng mã hash của commit mà bạn lỡ tay thực hiện. Một trong các cách để tìm ra mã hash là chạy
 
-```css
-  animation: spinCircle 20s linear infinite;
+```terminal
+git log
 ```
 
-các giá trị đi kèm là linear và infinite để yêu cầu quá trình animation diễn ra ở nhịp đều đặn và lặp lại vô tận.
+3. Xoá commit khỏi nhánh `main`
+
+Bạn cần xoá commit kia khỏi nhánh `main`. Để làm điều này, gõ lệnh `reset`:
+
+```terminal
+git checkout main
+git reset --hard HEAD~1
+```
+
+- Lưu ý: Head~1 sẽ loại bỏ commit cuối cùng
+
+4. Push lên remote
+   Sau khi thực hiện các bước trên, bạn cần push lại các thay đổi lên remote repository:
+
+```terminal
+git push origin main --force
+git push origin feature
+```
+
+5. Tạo Merge request
+
+Bây giờ bạn có thể tạo Merge Request từ nhánh feature vào nhánh main.
