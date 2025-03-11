@@ -1,0 +1,70 @@
+---
+title: Tạo biểu đồ thanh về độ hài lòng của chủ vật nuôi
+date: '2025-03-11'
+tags: ['luyện tập css']
+draft: false
+summary:
+---
+
+![screenshot](/static/images/d4d737da-fa8b-4da7-82d8-8f18cb1e336c/ea67321f960342e9975780d57fd4cd74.png)
+
+[demo](https://haingdc.github.io/pet-to-happy-life-research-chart)
+[source code](https://github.com/haingdc/pet-to-happy-life-research-chart)
+
+Bài hôm nay sẽ gần giống với bài biểu đồ [trước](/blog/bieu-do-thanh-ly-do-hoc-tieng-anh) với vài thay đổi như màu sắc của từng thành phần thay đổi, trục tung sẽ xuất hiện phía trên thay vì dưới. Ngoài ra cũng có thêm các đường thẳng đứng ứng với mỗi nhịp ở trục tung.
+
+Để có mỗi thanh là một màu, ta có đoạn mã sau:
+
+```js
+const colors = ['#2f75bb', '#882490', '#00a74f', '#bcbdbf']
+
+// Tạo các thanh với màu sắc khác nhau
+svg
+  .append('g')
+  .selectAll()
+  .data(data)
+  .join('rect')
+  .attr('fill', (d, i) => colors[i % colors.length])
+  .attr('x', x(0))
+  .attr('y', (d) => y(d.letter))
+  .attr('width', (d) => x(d.frequency) - x(0))
+  .attr('height', y.bandwidth())
+  .attr('rx', radius)
+```
+
+Bằng cách có một danh sách các màu được qui định ở biến `colors`. Khi thiết lập màu thuộc tính `fill` ta duyệt từng phần tử và gán cho giá trị màu ứng với từng index:
+
+```js
+//
+.attr("fill", (d, i) => colors[i % colors.length])
+//
+```
+
+Để hiển thị trục tung phía trên ta sử dụng hàm `attr` thiết lập giá trị cho `"transform"`:
+
+```js
+// Thêm trục x vào svg
+const formatXTick = (d) => d3.format('~s')(d)
+svg.append('g').attr('transform', `translate(0,${marginTop})`)
+```
+
+**Chú ý**: tick là các giá trị đếm từ 0, 10, 20, 30,...
+
+Và để thêm các thanh dọc theo từng tick:
+
+```js
+// Thêm các đường kẻ dọc theo trục x (grid lines)
+svg
+  .append('g')
+  .attr('class', 'grid')
+  .attr('transform', `translate(0,${marginTop})`) // Đặt cùng vị trí với trục x
+  .call(
+    d3
+      .axisTop(x)
+      .ticks(d3.max(data, (d) => d.frequency) / 10) // Các tick tại 10, 20, 30,...
+      .tickSize(-height + marginTop + marginBottom) // Kéo dài grid lines xuống dưới
+      .tickFormat('') // Không hiển thị text của tick
+  )
+  .call((g) => g.selectAll('.tick line').attr('stroke', '#c1c0c3').attr('stroke-width', 0.7)) // Đặt màu cho đường grid
+  .call((g) => g.select('.domain').remove())
+```
