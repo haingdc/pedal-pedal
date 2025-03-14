@@ -1,0 +1,20 @@
+---
+title: Dùng git reset để gộp commit gần nhất
+date: '2025-03-15'
+tags: ['git', 'fixing bỏ túi']
+draft: false
+summary:
+---
+
+Dạo này tôi hay viết hơn. Một phần nhờ có blog cá nhân, nơi có thể lưu giữ những thông tin . Trước đây vì lưu trên máy, rồi nhớ lại quên, lúc sau vất vả lục lại. Tôi có một case hay gặp đó là khi ở nhánh feature muốn gộp các commit cách đây vài phút vì tôi hay bỏ sót file để thêm vào `staged changes`, dẫn tới đi tạo thêm commit bổ sung. Điều này đặt ra mong muốn gộp các commit về một. Để thực hiện tôi làm như sau:
+
+```terminal
+git reset --sort HEAD~2
+```
+
+Câu lệnh trên sẽ giữ code vẫn là mới nhất, tuy nhiên các file ta sửa từ 2 commit gần nhất được đặt ở `staged changes`. Đồng thời 2 commit mà bạn tạo sẽ không còn. Mọi việc còn lại là tôi sẽ tạo một commit với nội dung mới là xong.
+
++ Số __2__ ở đây có thể thay đổi với những commit nằm trên đầu HEAD.
++ Tôi không chắc nó có gặp vấn đề khi xen giữa 2 commit của bản thân là các commit của người thứ ba cũng sửa trên file mà tôi đang thay đổi (Khi muốn pull từ nhánh `main`).
+
+Trên đây là kinh nghiệm bỏ túi hữu ích khi làm việc với git. Chúc bạn một ngày thuận lợi.
