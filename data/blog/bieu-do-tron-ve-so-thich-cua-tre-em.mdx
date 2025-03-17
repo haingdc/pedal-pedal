@@ -1,0 +1,233 @@
+---
+title: Tạo biểu đồ tròn về sở thích cá nhân bằng d3
+date: '2025-03-17'
+tags: ['chart', 'pie chart', 'd3', 'luyện tập CSS']
+draft: false
+summary:
+---
+
+![screenshot](/static/images/ec534319-fa7b-4baa-8109-10460e679076/f8782edf94e44baa9c2e0dbddd89a95e.png)
+[demo](https://haingdc.github.io/hobby-of-kids-pie-chart/)
+[source](https://github.com/haingdc/hobby-of-kids-pie-chart/)
+
+Khi đi xây dựng một website, để thu hút người sử dụng chúng ta cần chuẩn bị nội dung thật thu hút và dễ tiếp thu thông tin. Một trong những gia vị để tạo nội dung đó chính là những biểu đồ. Bài hôm nay sẽ về biểu đồ tròn
+
+Để xây dựng ta bắt đầu bằng xây dựng cấu trúc HTML đơn giản như sau:
+
+```html
+<body>
+    <div class="container">
+      <h1 class="title">Favorite hobbies pie chart</h1>
+      <div id="chart-container"></div>
+    </div>
+  </body>
+```
+
+\#chart-container là thẻ sẽ được dựng thành biểu đồ tròn. Thẻ chứa 2 phần là biểu đồ tròn nằm tay trái và phần chú thích bên tay phải. Tất cả được dựng bằng svg.
+
+Ta sẽ cần qui định một vài kích thước và khoảng cách:
+
+```js
+// Thiết lập kích thước
+const width = 600
+const height = 400
+const margin = 40
+
+// Biểu đồ tròn sẽ chiếm nửa bên trái của SVG
+const radius = Math.min(width / 2, height) / 2 - margin
+```
+
+Giá trị width, height hiển nhiên rõ ràng. Còn margin nhằm đảm bảo có khoảng cách từ hình tròn tới cạnh của svg. Tuỳ thuộc width, height để xác định cạnh là cạnh dài hoặc cạnh ngắn.
+
+"Nếu thay đổi giá trị 0 sẽ thấy hình tròn nằm sát 1 một cạnh và nếu là số âm thì hình tròn sẽ bị khuất mất một phần".
+
+Tiếp theo sẽ cho hiển thị phần hình tròn và phần chú thích.
+
+## Phần hình tròn
+
+Để vẽ hình tròn, ta cần tạo Svg:
+
+```js
+// Tạo SVG
+const svg = d3
+    .select("#chart-container")
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .attr("viewBox", `0 0 ${width} ${height}`)
+    .attr("style", "max-width: 100%; height: auto;")
+
+// Tạo nhóm biểu đồ tròn
+const pieGroup = svg.append("g").attr("transform", `translate(${width / 4}, ${height / 2})`)
+```
+
+Câu lệnh sẽ tạo thẻ `svg` nằm trong `#chart-container`. Trong svg là thẻ `g`.
+
+Lúc này vẫn màn hình hiển thị rỗng tuy nhiên bạn có thể `inspect element` để thấy cấu trúc html được tạo ra.
+
+sau đó ta sẽ qui định màu sắc các lát cắt của hình tròn, tạo biểu đồ, tạo cung tròn, ...:
+
+```js
+// Thiết lập màu sắc
+const color = d3
+    .scaleOrdinal()
+    .domain(data.map((d) => d.name))
+    .range(["#e84945", "#f49737", "#f3e63b", "#99d7eb"])
+
+// Tạo bộ tạo biểu đồ tròn
+const pie = d3
+    .pie()
+    .value((d) => d.value)
+    .sort(null)
+
+// Tạo bộ tạo cung
+const arc = d3.arc().innerRadius(0).outerRadius(radius)
+
+// Tạo dữ liệu biểu đồ tròn
+const pieData = pie(data)
+
+const rootStyles = getComputedStyle(document.documentElement)
+const strokeColor = rootStyles.getPropertyValue("--pie-stroke-color").trim()
+// // Thêm các lát cắt
+pieGroup
+    .selectAll("path")
+    .data(pieData)
+    .join("path")
+    .attr("d", arc)
+    .attr("fill", (d) => color(d.data.name))
+    .attr("stroke", strokeColor || 'white')
+    .style("stroke-width", "2px")
+    .style("opacity", 1)
+```
+
+Chú ý: tôi có khai báo màu viền của từng lát cắt thông qua CSS variable là `--pie-stroke-color: #f3f3f3;`. Đồng thời để mặc định là màu trắng.
+
+Tới đây ta được:
+
+![Screen Shot 2025-03-17 at 10.53.29.png](/static/images/ec534319-fa7b-4baa-8109-10460e679076/00ac4d5564e0456ea013516fc6acf86a.png)
+
+## Phần chú thích
+
+Tương tự như pieGroup ở biểu đồ tròn ta cũng tạo một biến là legendGroup là thẻ `<g>` 
+
+```js
+const legendGroup = svg.append("g").attr("transform", `translate(${width / 2 + 30}, ${height / 2 - 80})`)
+```
+
+Sử dụng các hàm `selectAll`, `data` và `join` để thêm vào các hàng hiện thị giá trị cho từng sở thích:
+
+```js
+// Tạo chú thích
+const legendItems = legendGroup
+    .selectAll(".legend-item")
+    .data(data)
+    .join("g")
+    .attr("class", "legend-item")
+    .attr("transform", (d, i) => `translate(0, ${i * 40})`)
+
+// Thêm ID theo name cho từng mục chú thích
+legendItems.each(function (d) {
+    d3.select(this).attr("id", `legend-${d.name.replace(/\s+/g, '-')}`);
+});
+```
+
+Một lần nữa khi `inspect element` sẽ cho ra các thẻ `<g>` với class `legend-item`:
+
+```html
+<g transform="translate(330, 120)">
+	<g class="legend-item" transform="translate(0, 0)" id="legend-Reading"></g>
+	<g class="legend-item" transform="translate(0, 40)" id="legend-Painting"></g>
+	<g class="legend-item" transform="translate(0, 80)" id="legend-Dancing"></g>
+	<g class="legend-item" transform="translate(0, 120)" id="legend-Singing"></g>
+</g>
+```
+
+Câu lệnh tiếp theo sẽ đi tới hiển thị chú thích về màu, tên sở thích và giá trị:
+
+```js
+// Thêm hình vuông màu vào chú thích
+legendItems
+    .append("rect")
+    .attr("width", 20)
+    .attr("height", 20)
+    .attr("fill", (d) => color(d.name))
+
+// Thêm tên danh mục vào chú thích
+legendItems
+    .append("text")
+    .attr("x", 30)
+    .attr("y", 15)
+    .text((d) => d.name)
+
+// Thêm phần trăm vào chú thích
+legendItems
+    .append("text")
+    .attr("x", 150)
+    .attr("y", 15)
+    .text((d) => {
+        return d.value
+        // const percent = Math.round((d.value / total) * 100)
+        // return `${percent}%`
+    })
+    .style("font-weight", "bold")
+```
+
+Vậy là ta đã hoàn thành 2 phần:
+
+![Screen Shot 2025-03-17 at 15.27.33.png](:/b4a4fb3b02ba4199830404c60bd3efc7)
+
+Một điều nữa ta có thể làm ...
+
+# Tương tác
+
+Khi hover vào lát cắt tôi cho hiển thị tooltip và hiệu ứng highlight ở phần chú thích. Ta sẽ cần thêm vào các hàm xử lí sự kiện `mouseover`, `mousemove`, `mouseout`:
+
+```js
+// Thêm các lát cắt
+pieGroup
+    .selectAll("path")
+    .data(pieData)
+    .join("path")
+    .attr("d", arc)
+    .attr("fill", (d) => color(d.data.name))
+    .attr("stroke", strokeColor || 'white')
+    .style("stroke-width", "2px")
+    .style("opacity", 1)
+    .on("mouseover", function (event, d) {
+        const percent = Math.round((d.data.value / total) * 100);
+        pieTooltip.style("display", "block")
+                  .text(`${d.data.name}: ${percent}%`)
+                  .style("left", (event.pageX + 10) + "px")
+                  .style("top", (event.pageY + 10) + "px");
+        // Highlight liên quan legend item
+        d3.select(`#legend-${d.data.name.replace(/\s+/g, '-')}`).style("text-decoration", "underline");
+        d3.select(`#legend-${d.data.name.replace(/\s+/g, '-')} rect`)
+          .style("stroke", "black");
+    })
+    .on("mousemove", function (event) {
+        pieTooltip.style("left", (event.pageX + 10) + "px")
+                  .style("top", (event.pageY + 10) + "px");
+    })
+    .on("mouseout", function (event, d) {
+        pieTooltip.style("display", "none");
+        d3.select(`#legend-${d.data.name.replace(/\s+/g, '-')}`).style("text-decoration", "none");
+        d3.select(`#legend-${d.data.name.replace(/\s+/g, '-')} rect`)
+          .style("stroke", "none");
+    });
+```
+
+
+![kids-hobbies-pie-chart.gif](/static/images/ec534319-fa7b-4baa-8109-10460e679076/4a6b72a9487d42fba417d08de5139413.gif)
+
+Ngoài ra tôi có bổ sung về khái niệm biểu đồ tròn để chúng ta sử dụng chúng trong hoàn cảnh phù hợp.
+
+# Biểu đồ tròn là gì?
+
+Biểu đồ tròn (hay còn gọi là biểu đồ hình tròn, pie chart) là một loại biểu đồ dùng để biểu diễn tỷ lệ hoặc phần trăm của các thành phần trong một tổng thể. Nó có dạng hình tròn và được chia thành nhiều phần (hình quạt), mỗi phần tương ứng với một nhóm dữ liệu.
+
+Đặc điểm của biểu đồ tròn:
+
+- ✅ Hình dạng: Hình tròn, được chia thành các phần theo tỷ lệ.
+- ✅ Đơn vị đo lường: Thường sử dụng phần trăm (%).
+- ✅ Sử dụng khi nào? Khi muốn thể hiện cơ cấu, tỷ lệ, hoặc so sánh giữa các thành phần trong một tổng thể.
+- ✅ Hạn chế: Không phù hợp khi có quá nhiều dữ liệu nhỏ, khó so sánh chính xác giữa các phần.
