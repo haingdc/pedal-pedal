@@ -1,0 +1,154 @@
+---
+title: Tạo biểu đồ thanh phân kỳ về mức độ hài lòng của thiết bị điện tử
+date: '2025-03-25'
+tags: ['chart', 'd3', 'bar chart', 'diverging bar chart']
+draft: false
+summary:
+---
+
+![screenshot](/static/images/076afe01-352b-49d8-a7e5-abf919e5e523/e0e78c201311422fa21cd3aa7cf13ffc.png)
+[data.json](https://github.com/haingdc/diverging-bar-chart-depict-level-satisfaction-about-electronic-devices/blob/main/data.json)
+[demo](https://haingdc.github.io/diverging-bar-chart-depict-level-satisfaction-about-electronic-devices/)
+[source code](https://github.com/haingdc/diverging-bar-chart-depict-level-satisfaction-about-electronic-devices)
+
+
+d3 là thư viện được dùng để tạo đồ thị bằng svg. Bài viết này sẽ về một dạng của biểu đồ thanh là biểu đồ thanh phân kỳ. Điểm đặc trưng của loại này là với mỗi phần tử sẽ lấy ra một giá trị để dựng được trục cơ sở (trục dóng). Các giá trị còn lại phân bổ theo đó.
+
+Biểu đồ trong demo bao gồm 2 phần là phần biểu đồ và phần chú thích. Ta tạo ra thẻ root là svg. Trong thẻ svg thêm vào 2 thẻ `g` tương ứng với mỗi phần.
+
+![IMG_4865.jpeg](/static/images/076afe01-352b-49d8-a7e5-abf919e5e523/d207545ce1cd468f8602eb0165a69160.jpeg)
+
+
+
+# Phần biểu đồ
+
+Điểm đầu tiên ta khai báo 2 trục tung hoành
+
+## Trục tung
+Ta sử dụng hàm `d3.linearScale()`. Tại đây ta cần xác định biên độ giá trị là `[-maxValue, maxValue]`.
+
+Để tìm ra câu trả lời hãy xác định giá trị để làm trục cơ sở có index là mấy? Sau đó đi kiểm tra tổng tổng các giá trị index trước và sau index, bên nào lớn hơn thì lấy. Giá trị này sau đó được cộng với 1/2 giá trị ở index. Thí dụ nếu ta chọn index cơ sở là 2 thì sẽ lấy max của
+
+```text
+d(0) + d(1) vs d(3) + d(4)
+```
+
+tương ứng với
+
+```js
+d.stronglyDisagree + d.disagree vs d.agree + d.stronglyAgree
+```
+
+
+![IMG_4866.jpeg](/static/images/076afe01-352b-49d8-a7e5-abf919e5e523/37ab2282a1a54e2bb8cfb44ea04ee3dd.jpeg)
+
+Ta thực hiện bước này với mỗi phần tử trong data. Kết quả thu được danh sách maxValue của tất cả phần tử. Tiếp theo chọn ra thằng nào lớn nhất để dùng làm maxValue của trung tung.
+
+```js
+const xScale = d3.scaleLinear()
+    .domain([-maxValue, maxValue])
+```
+
+Sau khi biết được domain, ta cũng cần biết được giá trị thực tế về pixel. Phạm vi sẽ là:
+
+```js
+.range([bandWidth, chartWidth])
+```
+
+Giá trị tối thiểu bandWidth là không gian để hiển thị tên sản phẩm.
+
+chartWidth thì tương đối rõ ràng!
+
+## Trục hoành
+
+Trục hoành sẽ cần tới hàm `d3.scaleBand()` với domain là tên các sản phẩm, range tối thiểu là 0 và tối đa là chartHeight:
+
+```js
+const yScale = d3.scaleBand()
+    .domain(products.map(d => d.group))
+    .range([0, chartHeight])
+    .padding(0.5);
+```
+
+## Bố cục
+
+![layout](/static/images/076afe01-352b-49d8-a7e5-abf919e5e523/9c56681244ce4e51acd1e2d8acef7703.jpeg)
+
+Hình này minh họa bố cục của biểu đồ. Ngay tại trung tâm là các thanh mà như đã biết nằm trong phạmm vi `[bandWidth, chartWidth]`. Bên trái nó là phần hiện tên sản phẩm. Bao bọc chúng là `chartGroup`. Lớp svg sẽ nằm ngoài cùng chứa phần đồ thị và phần chú thích. Để đơn giản tôi lược bớt phần chú thích.
+
+## Vẽ các thanh
+
+Để vẽ một thanh ta cần xác định được toạ độ x, y, chiều rộng, chiều cao và màu nền:
+
+![bar information](/static/images/076afe01-352b-49d8-a7e5-abf919e5e523/2455e6019af34dc88978516eb95f366f.jpeg)
+
+```js
+levels.forEach((level, index) => {
+    chartGroup.selectAll(`.bar-${level.name}`)
+        .data(products)
+        .enter()
+        .append("rect")
+        .attr("class", `.bar-${level.name}`)
+        .attr("x", d => getXCenterByIndex(d, index, xScale, indexAxis))
+        // .attr("x", d => xScale(sumUpValuesByPreviousIndexes(index, d)))
+        .attr("y", d => yScale(d.group))
+        .attr("width", d => getWidthByIndex(d, index, xScale))
+        .attr("height", yScale.bandwidth())
+        .attr("fill", level.color)
+})	
+```
+
+\*\* Lưu ý: Ưu điểm của sài svg là khả năng inspect trên devtool của trình duyệt
+
+Tôi có thang cấp độ từ dễ tới khó mà ta sẽ đi lần lượt:
+
+![IMG_4875.jpeg](/static/images/076afe01-352b-49d8-a7e5-abf919e5e523/eb2c1f5f4e6944e8beb11753059070dc.jpeg)
+
+### Màu nền
+Ta lấy ra giá trị được qui định trong file json.
+
+```js
+.attr("fill", level.color)
+```
+### Chiều cao
+
+Các thanh có cùng chiều cao, ta gọi hàm `yScale.bandWidth()` và thu được giá trị pixel.
+
+```js
+.attr("height", yScale.bandwidth())
+```
+
+### Toạ độ y
+
+Ta gọi `yScale(tên_sản_phẩm)` để thu được toạ độ y ứng với từng sản phẩm.
+
+```js
+.attr("y", d => yScale(d.group))
+```
+
+### Chiều rộng
+
+Để tính chiều rộng ta gọi hàm `xScale(giá_trị_cấp_độ_hài_lòng)` trừ cho `xScale(0)`.
+
+### Toạ độ x
+
+Tọa độ x của thanh được xác định là tổng các giá trị trước nó. Chả hạn với neutral sẽ là tổng `d.stronglyDisagree + d.disagree`. Sau đó gọi `xScale(tổng)` cho ta vị trí pixel. Tôi gọi toạ độ này là toạ độ `x_left`.
+
+Để có thể dựng được trục cơ sở thì `index cơ sở` và các index anh em sẽ cần di chuyển 1 biển độ mà tôi đặt tên là `delta`.
+
+![IMG_4877.jpeg](/static/images/076afe01-352b-49d8-a7e5-abf919e5e523/03465148e89145349026482e971159ca.jpeg)
+
+Ta có công thức tính delta như trên và sẽ cần có được `x_center` là biết được delta.
+
+`x_center` đơn giản là tọa độ tại 0 trừ 1/2 chiều rộng thanh.
+
+Vậy là ta thu được delta dựa vào `index cơ sở`. Sau đó dễ dàng có được `x_center` của mỗi thanh. Tôi sẽ dùng vòng lặp để vẽ từng thanh. Bắt đầu từ những thanh strongly disagree, sau đó các thanh disagree, và cứ thế. Bạn có thể xem hình sau:
+
+![IMG_4872.jpeg](/static/images/076afe01-352b-49d8-a7e5-abf919e5e523/160a07bc1eec47848bdff9ae0b3f2889.jpeg)
+
+Nó sẽ khác về thứ tự. Tôi muốn chỉ ra rằng vòng lặp sẽ bắt đầu với các thanh cùng màu và cứ thế lặp theo từng cấp độ.
+
+Về cơ bản tới đây là bạn có thể hiểu được các mà demo này được triển khai.
+
+Trong code có các phần như flag isDebug, đẩy tên sản phẩm xuống dòng, vẽ chú thích, sự kiện mouse, hay thử thay đổi index cơ sở. Tôi không tiện nêu ra vì bài viết đã khá dài rồi. Bạn có thể thử khám phá sau này nha.
+
