@@ -1,0 +1,143 @@
+---
+title: CSS :focus-within và :focus-visible
+date: '2025-03-30'
+tags: ['css']
+draft: false
+summary:
+---
+![screenshot](/static/images/d1c06109-9fdc-4540-9c49-42c1ef822bce/8f9ddd96f6b747ccb04e49a5d2723aa1.png)
+[demo](https://haingdc.github.io/focus-within/)
+[source code](https://github.com/haingdc/focus-within)
+
+Trong quá trình code giao diện bằng CSS, tôi có biết về 2 pseudo class. Tuy nhiên chưa bao giờ hiểu cách hoạt động của chúng. Chúng có ý nghĩa về __accessibility__, khi người dùng sử dụng phím TAB để điều hướng tới các link trên cùng 1 trang. Dựa trên bài viết [Navigating Navigation - Designing in the Browser](https://web.dev/shows/designing-in-the-browser/qD7SecF8qWA), tôi sẽ mượn ví dụ của họ để thành bài note cho bản thân.
+
+Giả sử một developer được giao task làm dropdown navbar:
+
+Anh ấy bắt đầu bằng cấu trúc:
+
+```html
+<nav role="navigation">
+  <ul>
+    <li><a href="#">One</a></li>
+    <li>
+      <a href="#" aria-haspopup="true">Two</a>
+      <ul class="dropdown" aria-label="submenu">
+        <li><a href="#"">Sub-1</a></li>
+        <li><a href="#"">Sub-2</a></li>
+        <li><a href="#"">Sub-3</a></li>
+      </ul>
+    </li>
+    <li><a href="#">Three</a></li>
+  </ul>
+</nav>
+```
+
+Chú ý anh ấy thêm vào thẻ `<a> trong mỗi li`. Điều này giúp điều hướng giữa các đường dẫn bằng phím TAB.
+
+Còn đây là 1 đoạn về style:
+
+```css
+ul li > ul {
+  visibility: hidden;
+}
+
+ul li:hover > ul,
+ul li ul:hover,
+ul li ul:focus {
+  visibility: visible;
+  opacity:1;
+  display: block;
+}
+li:hover,
+li:focus-within
+{
+  background:hotpink;
+  cursor: pointer;
+}
+
+li:focus-within a {
+  outline:none;
+}
+```
+
+
+![use mouse to hover to li](/static/images/d1c06109-9fdc-4540-9c49-42c1ef822bce/c0fe3ac750384028a21170c9f94d1ef5.gif)
+
+Dropdown dường như hoạt động ổn áp. Hover vào One Two Three, chúng lần lượt được highlight. Khi hover vào Two, sẽ hiện ra các thành phần con. Thế là hoàn thành. Tuy nhiên, ai đó đến trược mặt anh ấy, khả năng là Sếp hoặc QA, người luôn yêu cầu cao hơn bạn nghĩ. Họ nói rằng dropdown chưa thể sài được bằng phím TAB đúng như mong đợi. Khi click vào phím TAB, nó sẽ điều hướng tới One Two Three. Tuy nhiên, bạn có thể làm cho nó di chuyển sự tập trung sang các thành phần con nữa của wo được chứ?
+
+Vì nghĩ rằng khi focus tới li tương ứng với Two bạn sẽ cho hiện toàn bộ thẻ ul con. Anh ấy liền thử với `:focus` và dù Two được highlight mà thẻ con thì chưa thấy đâu:
+
+```css
+ul li:hover > ul,
+ul li ul:hover,
+ul li ul:focus
+ul li:focus > ul /* thử lần 1 */
+{
+  visibility: visible;
+  opacity:1;
+  display: block;
+}
+```
+
+Để debug anh ấy thêm vào đoạn mã sẽ hiển thị thẻ nào đang được focus:
+
+```js
+document.addEventListener("focus", (event) => {
+    console.log(event.target);
+}, true);
+```
+
+Nhận ra rằng khi nhấn Tab, thẻ focus là `<a> ` chứ không phải `<li>`.
+
+Vậy cần điều chỉnh lại:
+
+```css
+ul li:hover > ul,
+ul li ul:hover,
+ul li ul:focus
+ul a:focus + ul /* thử lần 2 */
+{
+  visibility: visible;
+  opacity:1;
+  display: block;
+}
+```
+
+Thử Tab tới Two và thẻ ul con đã xuất hiện!
+Nhưng không thành công khi điều hướng tới các thẻ con. Thậm chí không thể điều hướng tới Three.
+
+Lúc này nhờ có `:focus-within` ta có thể giải quyết nguyện vọng được đặt ra.
+
+```css
+ul li:hover > ul,
+ul li:focus-within ul, /* sử dụng focus-within */ 
+ul li ul:focus,
+ul li ul:hover {
+  visibility: visible;
+  opacity:1;
+  display: block;
+}
+```
+
+## :focus-visible
+
+`:focus-visible` được dùng để style cho thẻ nào đang được focus và được trình duyệt xác định là cần thiết (như khi dùng bàn phím).
+
+Trong demo nó được sử dụng khi di chuyển bằng TAB giữa link với nhau. Nếu dùng chuột để hover qua các link không có style được áp dụng.
+
+```css
+a {
+  display: block;
+  text-decoration: none;
+  width: 100px;
+  height: 50px;
+  border-left: 3px dashed transparent;
+  color: #fff;
+  padding: 8px;
+  &:focus-visible {
+    border-left: 3px dashed #fff;
+  }
+}
+```
+
+![navigate by tab](/static/images/d1c06109-9fdc-4540-9c49-42c1ef822bce/navigate-by-tab.gif)
