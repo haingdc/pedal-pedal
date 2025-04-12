@@ -1,0 +1,54 @@
+---
+title: Sử dụng điện thoại để mở đường link ở localhost
+date: '2025-04-12'
+tags: []
+draft: false
+summary: 
+---
+
+Khi làm ra một trang web, việc kiểm tra trên các thiết bị là điều cần thiết để tin tưởng rằng giao diện của những chức năng thực sự hoạt động tốt, không có bug xảy ra. Công việc của các anh em lập trìn viên là phát triển dự án ở môi trường local, với các màn hình khác nhau ta có thể sử dụng responsive mode của bộ công cụ devtool mà trình duyệt cung cấp.  Đồng thời ta có thể sử dụng điện thoại để trỏ tới localhost. Bài này tôi sẽ sử dụng tính năng tunnel giúp điện thoại truy cập dễ dàng tới server trên máy tính của mình. Có nhiều công cụ hỗ trợ tunnel như ngrok, Cloudflare Tunnel, [Vscode](https://code.visualstudio.com/docs/remote/tunnels),... Tôi sẽ sử dụng ngrok.
+
+Trước hết cần đăng ký tài khoản của ngrok https://dashboard.ngrok.com/signup
+
+Sau khi đăng nhập thành công ta sẽ truy cập tới dashboard. Tìm tới mục Your Authtoken và copy
+
+Cài đặt ngrok lên máy tính tuỳ theo hệ điều hành mà bạn sử dụng:
+https://dashboard.ngrok.com/get-started/setup
+
+Sau đó là sử dụng tunnel của ngrok trên terminal:
+
+```terminal
+ngrok http 3000
+```
+
+Chương trình sẽ cho ta đường link đang trỏ về localhost:3000. Trong hình là https://bedb-194-114-136-63.ngrok-free.app. Mỗi lần chạy bạn sẽ nhận được đường link khác nhau.
+
+![109e4138a5f5e6f35d3681ebf902233b.png](/static/images/b63b3d3a-af40-4902-95be-9b85c75f7f34/56b807446b4949ab915d835aebb4aed1.png)
+
+Mở link này trên điện thoại của bạn hoặc gửi link cho người khác để xem trên máy họ.
+
+Chú ý công cụ phát triển web có thể yêu cầu bạn thiết lập để cho phép tunnel hoạt động. Trong trường hợp của mình, tôi đang chạy dự án Vuejs sử dụng Vite để build code. Tôi sẽ cần config trong vite.config.ts:
+
+```typescript
+import { fileURLToPath, URL } from 'node:url'
+
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import vueDevTools from 'vite-plugin-vue-devtools'
+import tailwindcss from '@tailwindcss/vite'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [vue(), vueDevTools(), tailwindcss()],
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
+  server: {
+    // cho phép tunnel hoạt động
+    allowedHosts: true,
+  },
+})
+```
+
