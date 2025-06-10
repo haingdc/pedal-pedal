@@ -1,0 +1,593 @@
+---
+title: Xây dựng thư viện NPM cho Web component với Lit, Storybook trên Deno
+date: '2025-06-10'
+tags: ['publish npm', 'Deno', 'Storybook', 'Lit', 'Typescript', 'Lit-ts', 'Web Components', 'ReactJs', 'NextJs', 'Vite']
+draft: false
+summary:
+---
+
+[source code chung](https://github.com/haingdc/web-component-labs)
+[source code bài viết](https://github.com/haingdc/web-component-labs/tree/main/lesson-01-template-deno-vite-lit-ts-storybook-publish-npm)
+
+Có rất nhiều thành phần được nhắc tới trong bài viết này. Bao gồm việc tạo web-component bằng thư viện Lit, Sử dụng Storybook để xây dựng, test và viết tài liệu. Chạy code trên môi trường Deno mới mẻ. Cài đặt và xuất bản thư viện lên NPM. Tạo chương trình NextJs để thử nghiệm thư viện mà ta vừa tạo.
+
+Sau đây là lời mở đầu
+
+Làm frontend đã lâu, lúc nào cũng cài thư viện, nhưng chưa một lần hiểu cách một package hoạt động và phân phối ra làm sao. Vì thế nên đây cũng là lúc để đi tìm hiểu cách đăng tải lên NPM.
+
+Deno là một runtime cho Javascript. Vẫn còn tương đối mới và đang dần hoàn thiện hơn sau mỗi lần update, Deno với nhiều tính năng hiện đại, hỗ trợ typescript và tương thích ngược với NodeJs, v.v. 
+
+Ngày trước, một Leader đã gợi ý tôi về việc tìm hiểu web component. Khi đó, do e ngại va chạm việc nhiều thứ khi tìm hiểu một công nghệ sẽ tốn thời gian, nên tôi đã bỏ qua. Bây giờ với việc React 19 hỗ trợ tốt hơn cho web-component đây là lúc không thể thích hợp hơn để nghiên cứu về web component. Lit là thư viện phát triển web component đã quá phổ biến, nên tôi lựa chọn nó để xây dựng thư viện đầu tiên của mình.
+
+Trong một dự án Vue làm cho công ty, tôi có áp dụng storybook. Chỉ vừa mới bắt đầu sử dụng, tôi đã nhận ra ngay những lợi ích mà nó đem lại trong quá trình phát triển dự án. Nó giúp giảm thiểu bug ở ngay bước phát triển, và component có nhiều trạng thái, phát triển khả năng tương tác với component, tất cả xuất hiện là mỗi một story sẽ yêu cầu anh em lập trình việc chia component ra sao cho thật logic. Từ đấy, chúng ta tối đa hoá việc tái sử dụng component.
+
+
+
+# A. Bắt đầu
+- Tạo repository từ template
+- Tổng quan `<my-element />`
+- Cài đặt Storybook
+- Tổng quan về storybook của `<my-element />`
+
+## A1. Template Deno Vite Lit-ts
+
+Vite là build-tool thịnh hình lúc này với ưu điểm sử dụng dễ dàng hơn nhiều so với Webpack. Tôi thực thi lệnh [sau](https://vite.dev/guide/) để tạo repository:
+
+```terminal
+deno init --npm vite template-deno-vite-lit-ts-storybook-publish-npm --template lit-ts
+```
+
+Template cung cấp một web-component __my-element__ tạo bởi Lit. Việc dùng một thư viện hoặc bộ công cụ để bắt đầu tìm hiểu về web component giúp giảm cho bạn nhiều vấn đề so với không dùng thư viện
+
+Sau đó hãy mở file index.html thêm vào:
+
+```html
+<my-element>
+	<h1> Vite + Lit </h1>
+</my-element>
+```
+
+Rồi thực thi lệnh để mở đường link http://127.0.0.1:5173/ trên browser:
+
+```terminal
+deno task dev
+```
+
+![2fbcbf25f65fc7ab8e3e0a8ba72f5a0b.png](/static/images/e9d254b2-45ce-462e-8af4-c07b98245fbd/aaf6fe36e537494a891e0d7c30096992.jpeg)
+
+## A2. Tổng quan MyElement (nội dung tạo bởi AI)
+
+Tổng quan
+
+- Đây là web component được xây dựng bằng thư viện Lit
+- Được định nghĩa là custom element với tên __my-element__
+
+Các tính năng chính
+
+Properties:
+
+- docsHint: hiển thị text hướng dẫn
+- count: đếm số lần click button
+
+Giao diện:
+
+- Layout:
+	- có 2 Logo (Vite và Lit) với links
+	- Một slot để chèn nội dung
+	- Button với số đếm
+	- Text hướng dẫn ở dưới (docsHint)
+ 
+- Styling
+	- Được định nghĩa bằng CSS-in-JS thông qua hàm `styles`
+	- Responsive với chế độ sáng/tối
+ 
+	- Có hiệu ứng hover cho logo và button
+
+- Tương tác: Có phương thức onClick để tăng biến count khi nhấn vào button
+
+Kỹ thuật
+
+- Sử dụng decorators: `@customElement`, `@property`
+- Import assets logo từ các file svg
+- Extends từ LitElement
+- Typescript được sử dụng với type declarations
+
+Đây là một ví dụ điển hình về cách tạo một web component với thư viện Lit, trình diễn các tính năng cơ bản như properties, events, styling và templating.
+
+Đây là nội dung của my-element:
+
+```typescript
+import { css, html, LitElement } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import litLogo from "../assets/lit.svg";
+import viteLogo from "/vite.svg";
+
+/**
+ * An example element.
+ *
+ * @slot - This element has a slot
+ * @csspart button - The button
+ */
+@customElement("my-element")
+class MyElement extends LitElement {
+  /**
+   * Copy for the read the docs hint.
+   */
+  @property({ type: String })
+  docsHint = "Click on the Vite and Lit logos to learn more";
+
+  /**
+   * The number of times the button has been clicked.
+   */
+  @property({ type: Number })
+  count = 0;
+
+  render() {
+    return html`
+      <div>
+        <a href="https://vite.dev" target="_blank">
+          <img src="${viteLogo}" class="logo" alt="Vite logo" />
+        </a>
+        <a href="https://lit.dev" target="_blank">
+          <img src="${litLogo}" class="logo lit" alt="Lit logo" />
+        </a>
+      </div>
+      <slot></slot>
+      <div class="card">
+        <button @click="${this._onClick}" part="button">
+          count is ${this.count}
+        </button>
+      </div>
+      <p class="read-the-docs">${this.docsHint}</p>
+    `;
+  }
+
+  private _onClick() {
+    this.count++;
+  }
+
+  static styles = css`
+    :host {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .logo {
+      height: 6em;
+      padding: 1.5em;
+      will-change: filter;
+      transition: filter 300ms;
+    }
+    .logo:hover {
+      filter: drop-shadow(0 0 2em #646cffaa);
+    }
+    .logo.lit:hover {
+      filter: drop-shadow(0 0 2em #325cffaa);
+    }
+
+    .card {
+      padding: 2em;
+    }
+
+    .read-the-docs {
+      color: #888;
+    }
+
+    ::slotted(h1) {
+      font-size: 3.2em;
+      line-height: 1.1;
+    }
+
+    a {
+      font-weight: 500;
+      color: #646cff;
+      text-decoration: inherit;
+    }
+    a:hover {
+      color: #535bf2;
+    }
+
+    button {
+      border-radius: 8px;
+      border: 1px solid transparent;
+      padding: 0.6em 1.2em;
+      font-size: 1em;
+      font-weight: 500;
+      font-family: inherit;
+      background-color: #1a1a1a;
+      cursor: pointer;
+      transition: border-color 0.25s;
+    }
+    button:hover {
+      border-color: #646cff;
+    }
+    button:focus,
+    button:focus-visible {
+      outline: 4px auto -webkit-focus-ring-color;
+    }
+
+    @media (prefers-color-scheme: light) {
+      a:hover {
+        color: #747bff;
+      }
+      button {
+        background-color: #f9f9f9;
+      }
+    }
+  `;
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    "my-element": MyElement;
+  }
+}
+
+export default MyElement;
+
+```
+
+## A3. Cài đặt Storybook
+
+Khi thử cài Storybook bằng Deno cli:
+
+```terminal
+deno run -A npm:create-storybook@latest
+```
+
+Tạo file __deno.json__ và thêm vào như sau:
+
+```json
+{
+	"nodeModulesDir": "auto"
+}
+```
+
+Tuy nhiên kết quả không thành công. Deno đang giải quyết các vấn đề để tương thích tốt hơn với NodeJs và NPM. Trong khi đó, ta có thể sử dụng npm để cài storybook.
+
+Hãy xoá node_modules, package-lock.json (nếu có), dọn sạch cache bằng lệnh:
+
+```terminal
+rm -rf node_modules package-lock.json
+deno clean
+npm cache clean --force
+```
+
+Tiếp đó chạy lệnh sau:
+
+```terminal
+npm create storybook@latest
+```
+
+Lưu ý: cứ lấy theo tuỳ chọn mặc định & đầy đủ mà storybook cung cấp. Sau khi setup thành công, có thể xoá file package-lock.json.
+
+Quan sát các thư mục và file sẽ thấy:
+- thư mục `.storybook`
+- file vitest.config.ts
+- thư mục `src/stories`
+- file vitest.shims.d.ts
+
+Storybook có hàng tá tính năng để bạn khám phá, ở phạm vi bài viết sẽ đề cấp tới:
+
+Thư mục `.storybook`: thiết lập các cài đặt từ stories, addons, framework, v.v.
+
+Thư mục `src/stores`: các mẫu story mà chúng dùng để tham khảo.
+
+Storybook giúp phát triển & unit-test component một cách độc lập, cho phép xem component với các trạng thái khác nhau. 
+
+Good: Ta có thể build Storybook và host lên site để mọi thành viên trong đội có thể coi.
+
+## A4. Tổng quan về storybook của MyElement
+
+Default
+
+- Hiển thị tiêu đề "Vite + Lit" trong slot
+- Không truyền thuộc tính đặc biệt nào
+
+CustomHint
+
+- Hiển thị tiêu đề "Custom Message" trong slot
+- Truyền thuộc tính docsHint với giá trị "This is a custom hint message"
+
+PresetCount
+
+-  Hiển thị tiêu đề "Pre-set Counter" trong slot
+-  Hiển thị thuộc tính counter với giá trị 42
+
+CustomContent
+
+- Hiển thị tiêu đề "Custom Content" và 1 đoạn văn
+- Không truyền thuộc tính đặc biệt nào
+
+Sau đây là nội dung của file:
+
+```ts
+import type { Meta, StoryObj } from "@storybook/web-components-vite";
+import { html } from "lit";
+import "./my-element.ts";
+
+const meta = {
+  title: "UI/MyElement",
+  argTypes: {
+    docsHint: { control: "text" },
+    count: { control: "number" },
+    slot: { control: "text" },
+  },
+} satisfies Meta;
+
+export default meta;
+type Story = StoryObj;
+
+export const Default: Story = {
+  args: {
+    slot: html`
+      <h1>Vite + Lit</h1>
+    `,
+  },
+  render: (args) =>
+    html`
+      <my-element> ${args.slot} </my-element>
+    `,
+};
+
+export const CustomHint: Story = {
+  args: {
+    docsHint: "This is a custom hint message",
+    slot: html`
+      <h1>Custom Message</h1>
+    `,
+  },
+  render: (args) =>
+    html`
+      <my-element .docsHint="${args.docsHint}">
+        ${args.slot}
+      </my-element>
+    `,
+};
+
+export const PresetCount: Story = {
+  args: {
+    count: 42,
+    slot: html`
+      <h1>Pre-set Counter</h1>
+    `,
+  },
+  render: (args) =>
+    html`
+      <my-element .count="${args.count}">
+        ${args.slot}
+      </my-element>
+    `,
+};
+
+export const CustomContent: Story = {
+  args: {
+    slot: html`
+      <h1>Custom Content</h1>
+      <p>This is a paragraph inside the slot</p>
+    `,
+  },
+  render: (args) =>
+    html`
+      <my-element>
+        ${args.slot}
+      </my-element>
+    `,
+};
+
+```
+
+# B. Xây dựng thư viện NPM
+
+## B1. Lấy được types
+
+Chúng ta sẽ dùng công cụ `tsc` do typescript cung cấp để type declarations. Cái này sẽ giúp người dùng thư viện có thể dùng tính năng F12/Go to definition trong Vscode.
+
+Để làm được điều này, tôi sẽ sửa file `tsconfig.json` như sau:
+
+```json
+{
+	"compilerOptions": {
+		// ...
+		"declaration": true,
+		"emitDeclarationOnly": true,
+		"outDir": "./types"
+		// ...
+	}
+}
+```
+
+Khi chạy `tsc`, ta thu được folder `types` chứa chỉ file có đuôi `d.ts`.
+
+## B2. Qui định cho Vite để build thư viện
+
+Nếu bạn build bằng vite bây giờ, bạn sẽ được thư mục `dist` gồm các file html, css, javascript, svg. Đấy là kết quả build mặc định của vite với điểm xuất phát là `index.html` ở thư mục gốc. Vite cũng copy file ở thư mục `public` vào thư mục `build`
+
+Ta cần làm một bước mà mình tạm gọi là "Chuyển đổi mục đích build sang thư viện". Để làm được điều này, vite cung cấp tuỳ chỉnh build.lib và cho phép qui định những package nào không được đóng gói khi build. Ở đây ta cần loại thư viện Lit.
+
+Nếu chưa có ta sẽ tạo file `vite.config.ts`:
+
+```ts
+import { defineConfig } from "vite";
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  build: {
+    lib: {
+      entry: "src/index.ts",
+      formats: ["es"],
+      fileName: () => `index.es.js`,
+    },
+    rollupOptions: {
+      external: [
+        /^lit/,
+      ],
+    },
+  },
+});
+
+```
+
+Khi chạy lệnh `vite build` ta thu được file index.es.js
+
+## B3. Qui định package.json với mục đích làm thư viện
+
+Đổi giá trị của private từ true sang false
+
+Qui định về main, exports, types, files:
+
+```json
+{
+  // ...
+  "main": "dist/index.es.js",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./dist/index.es.js"
+    }
+  },
+  "types": "types/index.d.ts",
+  "files": [
+    "src",
+    "dist",
+    "types"
+  ],
+  // ...
+}
+```
+
+Đổi lit từ dependencies thành devDependencies bằng lệnh:
+
+```terminal
+deno add npm:lit --dev
+```
+
+Thêm lit vào peerDependencies. Điều này thể hiện rằng package mà ta xây dựng cần có lit được cài đặt. Tuy nhiên lit sẽ không được bundle trong package để tránh việc trùng lặp thư viện này khi sử dụng. Thử tưởng tượng ta cài các thư viện NPM và cái nào cũng được đóng gói bên trong thư viện Lit, đó là sự lãng phí thực sự. Thực thi lệnh:
+
+
+```terminal
+npm pkg set peerDependencies.lit="^3.3.0"
+```
+
+## B4. Publish tới NPM
+
+Trước hết đảm bảo bạn đã có tài khoản NPM. Sau đó đăng nhập thông qua npm cli:
+
+```terminal
+npm login
+deno task bump-patch
+deno task publish-npm
+```
+
+Tôi sẽ giải thích từng lệnh
+
+`npm login`: ta cần đăng nhập npm để có thể publish thư viện
+
+`deno task bump-patch`: Tôi tạo task để tăng npm package version. Ví dụ
+
+```text
+bump patch version 0.0.0 -> 0.0.1
+bump patch version 0.0.1 -> 0.0.2
+v.v.
+```
+
+`deno task publish-npm`: publish lên NPM
+
+Để được như vậy, ta tạo task ở file `deno.json`:
+
+```json
+{
+  "tasks": {
+    "deno-build": {
+      "description": "Alternative to build script in package.json. This helps clarify the build process into two independent steps.",
+      "dependencies": ["tsc", "vite-build"]
+    },
+    "tsc": {
+      "description": "emit to declaration files",
+      "command": "tsc"
+    },
+    "vite-build": {
+      "description": "Builds the package.",
+      "command": "vite build"
+    },
+    "publish-npm": {
+      "description": "Publishes the package to NPM.",
+      "command": "npm publish"
+    },
+    "bump-patch": {
+      "description": "Bumps the patch version of the package.",
+      "command": "npm version patch --no-git-tag-version",
+      "dependencies": ["build"]
+    }
+  }
+}
+```
+
+Vậy là tôi đã có package đầu tiên cho mình.
+
+
+# C. Cài đặt và sử dụng thư viện trong dự án NextJs
+
+Tạo dự án NextJS (runtime NodeJS), cài đặt và sử dụng thư viện:
+
+```terminal
+npx create-next-app@latest
+npm install lit @lit/react
+npm install template-deno-vite-lit-ts-storybook-publish-npm
+```
+
+Để sử dụng MyElement, tôi cần 1 wrapper component:
+
+Tạo file theo đường dẫn sau app/components/my-element/my-element-wrapper-react.tsx:
+
+```tsx
+"use client";
+
+import { createComponent } from "@lit/react";
+import React from "react";
+import { MyElement as MyElementWc } from "template-deno-vite-lit-ts-storybook-publish-npm";
+
+const MyElementWrapper = createComponent({
+  tagName: "my-element",
+  react: React,
+  elementClass: MyElementWc,
+});
+
+export default function MyElement() {
+  return (
+    <MyElementWrapper
+      count={7}
+      docsHint="This is a React wrapper for the LitElement component"
+    >
+      <h1>Custom Content</h1>
+      <p>This is a paragraph inside the slot</p>
+    </MyElementWrapper>
+  );
+}
+
+```
+
+Sau cùng, import wrapper component ở page.tsx:
+
+```tsx
+import styles from "./page.module.css";
+import MyElement from "@/app/components/my-element/my-element-wrapper-react";
+
+export default function Home() {
+  return (
+    <div className={styles.page}>
+      <main className={styles.main}>
+        <MyElement />
+      </main>
+    </div>
+  );
+}
+
+```
+
+![17249d15924cdc9d937c89bd764102af.png](/static/images/e9d254b2-45ce-462e-8af4-c07b98245fbd/97bd2dc1ba2341719971ace76722f841.jpeg)
+
+Trên đây là hướng dẫn chi tiết các bước tạo và sử dụng thư viện web component mà tôi đang tìm hiểu. Cảm ơn và chúc một ngày diễn ra tốt đẹp với bạn.
+
