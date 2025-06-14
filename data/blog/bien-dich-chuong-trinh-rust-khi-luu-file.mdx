@@ -1,0 +1,44 @@
+---
+title: Biên dịch lại chương trình Rust khi lưu file
+date: '2025-06-14'
+tags: ['rust']
+draft: false
+summary:
+---
+
+Trong khi học Rust với nhiều khái niệm trong nó, tôi thấy thật cần thiết để sài một công cụ nào đó tương tự `nodemon` ở NodeJs để giúp cho bản thân khỏi phải khởi chạy lại chương trình thủ công. Trong đấy có 2 chương trình mà ta có thể dùng:
+
+### 1. cargo watch (Dừng phát triển)
+Trong trường hợp bạn đang làm việc trên một dự án server (ví dụ: hyper, iron, v.v.) mà cần chạy liên tục và bạn muốn nó được khởi động lại khi các tệp thay đổi, bạn có thể sử dụng [`cargo watch`](https://github.com/watchexec/cargo-watch).
+
+Cài đặt:
+```
+cargo install cargo-watch
+```
+
+Sau đó chạy:
+```
+cargo watch -x run
+```
+
+Và để theo dõi các thay đổi chỉ trong thư mục `src` và xóa console, sử dụng:
+```
+cargo watch -c -w src -x run
+```
+
+Xem [cargo-watch README](https://github.com/watchexec/cargo-watch#readme) để biết thêm các ví dụ.
+
+### 2. watchexec
+Ngoài ra, bạn có thể sử dụng [watchexec](https://github.com/watchexec/watchexec).
+
+Cài đặt:
+```
+cargo install watchexec-cli
+```
+
+Sau đó sử dụng như sau:
+```
+watchexec -r cargo run
+```
+
+Ngoài 2 chương trình trên, còn có [Bacon](https://github.com/Canop/bacon). Tuy nhiên, tôi chưa thử nghiệm với nó.
