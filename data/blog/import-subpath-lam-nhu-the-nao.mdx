@@ -6,6 +6,9 @@ draft: false
 summary:
 ---
 
+[source code chung](https://github.com/haingdc/web-component-labs)
+[source code bài viết](https://github.com/haingdc/web-component-labs/tree/main/lesson-02-how-import-components-by-sub-path-instead-root-path)
+
 Trong quá trình xây dựng trang web, ta sẽ thấy đâu đó việc import tới thành phần con sử dụng subpath:
 
 ```ts
@@ -373,5 +376,7 @@ Tìm hiểu cách tạo 1 thư viện sẽ cần nhiều thử nghiệm để hi
    Tiếp tục từ LẦN III, tôi bổ sung sideEffects có giá trị "./src/count-down/count-display.ts" và đẩy lên NPM. Sau đó tạo chương trình NextJs version 15 và cài thư viện của mình. Tôi nhận ra count-display không hiển thị. Sau khi tìm hiểu thì ra vấn đề là bundler của NextJs không nghĩ count-display là side effect nên loại bỏ nó đi.
 
    💡 Giải pháp là trở về thư viện, thêm vào entry count-display trong vite.config.ts thì nó sẽ cho ta file 📝 dist/count-display.es.js. Sau đó tôi thêm đường dẫn file này vào sideEffects. Đẩy lên NPM và kiểm tra. Lần này NextJs nhận diện thành công, count-display được hiển thị.
+
+PS: Có 1 công cụ rất có ích để kiểm tra giữa type được `tsc` tạo ra và file trong 📁 dist có match với nhau hay có những xung đột gì là [arethetypeswrong](https://arethetypeswrong.github.io)
 
 Tới đây cũng là điểm kết thúc của bài viết! Hẹn gặp lại các bạn
