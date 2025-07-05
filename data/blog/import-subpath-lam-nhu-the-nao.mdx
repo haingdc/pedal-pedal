@@ -1,0 +1,377 @@
+---
+title: Import subpath Làm như thế nào?
+date: '2025-07-05'
+tags: ['publish npm', 'Deno', 'Storybook', 'Lit', 'Typescript', 'Lit-ts', 'Web Components', 'ReactJs', 'NextJs', 'Vite', 'import subpath']
+draft: false
+summary:
+---
+
+Trong quá trình xây dựng trang web, ta sẽ thấy đâu đó việc import tới thành phần con sử dụng subpath:
+
+```ts
+// Sử dụng import sub path
+import Foo from 'library-ui/foo'
+
+// Thay vì
+import { Foo } from 'library-ui'
+```
+
+Điều này giúp các công cụ biên dịch, đóng gói code dễ dàng hơn đóng gói phần code đủ để ứng dụng có thể hoạt động tốt, loại bỏ code dư thừa. Qua đó giảm thiểu kích thước các tập tin. Bài này chúng ta sẽ tìm hiểu cách mà thư viện hỗ trợ khả năng import qua đường dẫn con.
+
+Bài viết gồm 3 phần chính
+- Cấu trúc thư mục cho các component
+- Cập nhật các file cài đặt
+- Dòng thời gian trong thử nghiệm
+
+# Cấu trúc thư mục cho các component
+
+Dưới đây là cấu trúc sourcecode:
+
+```text
+📁 src
+  - 📁 count-down
+    - 📝 count-display.ts
+	- 📝 count-down.ts
+  - 📁 count-down-gang
+    - 📝 count-down-gang.ts
+  - 📝 index.ts
+```
+
+Chương trình của chúng ta có 2 loại count down, một loại sẽ chào đại loại là "Hello, Tuấn!". Còn loại kia sẽ là "Hello Gang, Tuấn!". Khi click vào Count down thì đều đếm ngược và kết quả được hiển thị thông qua component count-display. Rất đơn giản và dễ dàng! 
+
+Count-display ngắn gọn chỉ lấy giá trị từ property để hiển thị:
+
+```ts
+import { html, LitElement } from "lit";
+import { customElement } from "lit/decorators.js";
+
+@customElement("count-display")
+class CountDisplay extends LitElement {
+  static override properties = {
+    count: { type: Number },
+  };
+  declare count: number;
+  constructor() {
+    super();
+  }
+
+  override render() {
+    return html`
+      <p>Count: ${this.count}</p>
+    `;
+  }
+}
+```
+
+Count-down sẽ dài hơn chút:
+
+```ts
+import { css, html, LitElement } from "lit";
+import { customElement } from "lit/decorators.js";
+import "./count-display.ts";
+
+@customElement("count-down")
+class CountDown extends LitElement {
+  static override styles = css`
+    div {
+      border: 1px solid black;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      div {
+        border-color: white;
+      }
+    }
+
+    span {
+      color: rebeccapurple;
+    }
+
+    p {
+      font-family: sans-serif;
+    }
+  `;
+
+  static override properties = {
+    name: { type: String },
+    count: { type: Number },
+  };
+  declare name: string;
+  declare count: number;
+  constructor() {
+    super();
+
+    this.count = 0;
+    this.name = "Somebody";
+  }
+
+  private handleClick() {
+    this.dispatchEvent(
+      new CustomEvent("Decrease", {
+        bubbles: true,
+        composed: true,
+        detail: {
+          current_count: this.count,
+        },
+      }),
+    );
+  }
+
+  override render() {
+    return html`
+      <div>
+        <p>Hello, ${this.name}!</p>
+        <button @click="${this.handleClick}">Count down</button>
+        <count-display .count="${this.count}"></count-display>
+      </div>
+    `;
+  }
+}
+```
+
+Có một số điểm lưu ý trong component này
+
+Điểm đầu tiên, click vào button Count down, Nó sẽ dispatchEvent "Decrease". Event được tạo ra là CustomEvent, nó là Web API và có mặt ở cả NodeJs và Deno.
+
+Điểm thứ hai là cách ta import count-display ở dạng side effect import. Đây là cách được sử dụng trong Lit. Và sau đó ta có thể sử dụng `<count-display></count-display>` khi render.
+
+Nhân tiện, tôi sẽ giới thiệu 4 kiểu khai báo import của ESM là:
+
+```js
+// a. Named import
+import { export1, export2 } from "module-name";
+
+// b.Default immport
+import defaultExport from "module-name";
+
+// c. Namespace import
+import * as name from "module-name";
+
+// d. Side effect import
+import "module-name";
+```
+
+Điểm thứ ba là decorator `@customElement("count-down")`. Nó sẽ đăng ký global customElement tên "count-down". Đây chính là side effect nên giải thích cho việc ta sẽ sử dụng side effect import cho count-display.
+
+Cuối cùng, trên trình duyệt ta có thể sử dụng count-down như một thẻ bình thường:
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + Lit + TS</title>
+    <link rel="stylesheet" href="./src/index.css" />
+    <script type="module" src="/src/count-down/count-down.ts"></script>
+  </head>
+  <body>
+    <count-down name="Brown" count="27"></count-down>
+    <script>
+      const countDown = document.querySelector("count-down");
+      countDown.addEventListener("Decrease", (event) => {
+        countDown.count = event.detail.current_count - 1;
+      });
+    </script>
+  </body>
+</html>
+
+```
+
+Count-display-gang tương tự Count-down.
+
+Bây giờ nói về phần chính của bài, cho phép import sub path.
+
+# Cập nhật các file cài đặt
+
+Chúng ta sẽ cần qui định code ở các file: package.json, vite.config.ts.
+
+## Chúng ta bắt đầu từ vite.config.ts
+
+```ts {8-13, 15}
+import { defineConfig } from "vite";
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  build: {
+    sourcemap: false,
+    lib: {
+      entry: {
+        index: "src/index.ts",
+        "count-display": "src/count-down/count-display.ts",
+        "count-down": "src/count-down/count-down.ts",
+        "count-down-gang": "src/count-down-gang/count-down-gang.ts",
+      },
+      formats: ["es"],
+      fileName: (_format, entryName) => `${entryName}.es.js`,
+    },
+    rollupOptions: {
+      external: [
+        /^lit/,
+      ],
+      output: {
+        preserveModules: false,
+        exports: "auto",
+      },
+    },
+  },
+});
+
+```
+
+Giải thích:
+
+1. Entry
+	 Chúng ta sẽ tạo nhiều entry khác nhau thay vì 1. Điều này cho phép người dùng có thể import sub path.
+
+2. FileName
+	Giúp tạo các file có tên với đuôi `.es.js` như count-down.es.js, v.v.
+
+## Tiếp tới là vite.config.ts
+
+```ts {8-13, 15}
+import { defineConfig } from "vite";
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  build: {
+    sourcemap: false,
+    lib: {
+      entry: {
+        index: "src/index.ts",
+        "count-display": "src/count-down/count-display.ts",
+        "count-down": "src/count-down/count-down.ts",
+        "count-down-gang": "src/count-down-gang/count-down-gang.ts",
+      },
+      formats: ["es"],
+      fileName: (_format, entryName) => `${entryName}.es.js`,
+    },
+    rollupOptions: {
+      external: [
+        /^lit/,
+      ],
+      output: {
+        preserveModules: false, // nếu set là true thì count-display.ts có thể không được bundle trong dist/count-down.es.js
+        exports: "auto",
+      },
+    },
+  },
+});
+
+```
+
+Giải thích:
+
+1. Entry
+	 Chúng ta sẽ tạo nhiều entry khác nhau thay vì 1. Điều này cho phép người dùng có thể import sub path.
+
+2. FileName
+	Giúp tạo các file có tên với đuôi `.es.js` như count-down.es.js, v.v. package.json:
+
+```json {3, 5-27}
+{
+  "name": "lesson-02-how-import-components-separately-instead-of-whole-library",
+  "private": false,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./dist/index.es.js",
+      "default": "./dist/index.es.js"
+    },
+    "./count-down": {
+      "types": "./types/count-down/count-down.d.ts",
+      "import": "./dist/count-down.es.js",
+      "default": "./dist/count-down.es.js"
+    },
+    "./count-down-gang": {
+      "types": "./types/count-down-gang/count-down-gang.d.ts",
+      "import": "./dist/count-down-gang.es.js",
+      "default": "./dist/count-down-gang.es.js"
+    }
+  },
+  "sideEffects": [
+    "./src/count-down/count-display.ts",
+    "./dist/count-display.es.js"
+  ],
+  "types": "types/index.d.ts",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
+  "devDependencies": {
+    "@chromatic-com/storybook": "^4.0.1",
+    "@storybook/addon-a11y": "^9.0.15",
+    "@storybook/addon-docs": "^9.0.15",
+    "@storybook/addon-vitest": "^9.0.15",
+    "@storybook/web-components-vite": "^9.0.15",
+    "@vitest/browser": "^3.2.4",
+    "@vitest/coverage-v8": "^3.2.4",
+    "lit": "^3.3.0",
+    "playwright": "^1.53.2",
+    "storybook": "^9.0.15",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.0",
+    "vitest": "^3.2.4"
+  },
+  "peerDependencies": {
+    "lit": "^3.3.0"
+  }
+}
+```
+
+Giải thích:
+
+1. Private false
+   Đơn giản hoá việc đưa code lên NPM và sử dụng ta tạo public package.
+2. Type "module"
+   Qui định thư viện có kiểu module. Xây dựng với 1 kiểu duy nhất là Module sẽ đỡ hơn kiểu CommonJs hoặc cả 2 kiểu. Đồng thời, kiểu Module cũng quen thuộc với nhiều người.
+4. Exports
+   Đây là nơi chúng ta qui định các subpath có thể được sử dụng
+   
+   Phần tử đầu tiên là đường dẫn gốc. Lần lượt tiếp theo là các đường dẫn con count-down, count-down-gang. Mỗi phần tử gồm 3 phần types, import, default. Chúng sẽ chứa đường dẫn ở thư mục 📁 dist và 📁 types.
+
+6. SideEffects
+   Bạn sẽ thấy ở exports ta không qui định sub path count-display. Đó là chủ ý. Ta cung cấp count-down và count-down-gang để người dùng sử dụng. Bên trong nó có dùng count-display hay không thì họ không cần quan tâm.
+   Giá trị của sideEffects là "count-display" tới từ 📁 src và 📁 dist. Vite ở trong thư viện và bundler ở phía người dùng như (Webpack, Vite, Turbopack, v.v.) sẽ biết được là "A! Ta phải đóng gói code của count-display vì nó là side effect". Vite trong thư viện sẽ thấy giá trị count-display ở 📁 src và tạo lệnh import cho 📝 dist/count-down.es.js và 📝 dist/count-down-gang.es.js.
+
+   Hãy thử thiết lập sideEffects là false và bỏ entry là count-display trong vite.config.ts. Kết quả là 📁 dist chứ count-down và count-down-gang sẽ không có lệnh import count-display
+
+Vậy là tôi và các bạn đã hoàn thành việc qui định import sub path. Tới đây chúng ta có thể build code bằng lệnh `deno task build-deno` để kiểm tra. Nếu Okay chúng ta sẽ thực thi `deno task bump-patch` và cuối cùng đưa lên NPM `deno task publish-npm`.
+
+# Dòng thời gian trong thử nghiệm
+
+Tìm hiểu cách tạo 1 thư viện sẽ cần nhiều thử nghiệm để hiểu cách các bên liên kết với nhau. Qua đây tôi rút ra sau vài lần thử nghiệm:
+
+1. LẦN I
+	Ví dụ ban đầu gồm count-down và count-display, entry có count-down, sideEffects không được qui định. SideEffects không qui định đồng nghĩa với việc các bundler tự quyết định chỗ nào là sideEffects chứ không phải mặc định là false nha!
+
+2. LẦN II
+	Tôi thử với count-down và count-display, entry có count-down và sideEffects là "./src/count-down/count-display.ts". Kết quả cho ra file count-down.es.js chứa code của count-display trong nó.
+
+	🤖 Suy nghĩ của Vite có thể là count-display không có nhiều code, và cũng chỉ được dùng cho count-down thế thì ta nên đóng gói cả nó vào trong file count-down!
+
+	😐 Điều này làm tôi nghĩ tới LẦN III, nếu có thêm count-down-gang và nó sẽ phụ thuộc vào count-display. Liệu kết quả sẽ là file count-down-gang.es.js sẽ có code count-display trong nó. Điều này hoàn toàn gây trùng lặp code ở hai loại count down!
+
+3. LẦN III
+	Có count-down, count-display, count-down-gang, entry có count-down và count-down-gang, sideEffects không để.
+
+   Kết quả trong count-down.es.js và count-down-gang.es.js lần lượt có side effect import tới file "count-display-Dpg0kpmd.js". Mã Dpg0kpmd sẽ khác nhau tuỳ lúc build.
+
+	😐 Không có chuyện trùng lặp code ở cả 2 count down. Vite xác định là cả 2 anh đều phụ thuộc vào count-display nên cho ra 1 file riêng. Và vì không qui định trong entry nên file này mới có thêm mã băm Dpg0kpmd. Vậy là sideEffects dù không qui định nhưng được Vite luận ra là sẽ cần import nó cho count down. Dù vậy ta vẫn Nên thêm "./src/count-down/count-display.ts" vào sideEffects cho rõ ràng.
+
+4. LẦN IV (NƠI SỬ DỤNG - NEXTJS)
+   Tiếp tục từ LẦN III, tôi bổ sung sideEffects có giá trị "./src/count-down/count-display.ts" và đẩy lên NPM. Sau đó tạo chương trình NextJs version 15 và cài thư viện của mình. Tôi nhận ra count-display không hiển thị. Sau khi tìm hiểu thì ra vấn đề là bundler của NextJs không nghĩ count-display là side effect nên loại bỏ nó đi.
+
+   💡 Giải pháp là trở về thư viện, thêm vào entry count-display trong vite.config.ts thì nó sẽ cho ta file 📝 dist/count-display.es.js. Sau đó tôi thêm đường dẫn file này vào sideEffects. Đẩy lên NPM và kiểm tra. Lần này NextJs nhận diện thành công, count-display được hiển thị.
+
+Tới đây cũng là điểm kết thúc của bài viết! Hẹn gặp lại các bạn
