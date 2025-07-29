@@ -1,0 +1,144 @@
+---
+title: Tạo web-component timer-counter bằng thư viện lit?
+date: '2025-07-29'
+tags: ['publish npm', 'Deno', 'Storybook', 'Lit', 'Typescript', 'Lit-ts', 'Web Components', 'Vite']
+draft: false
+summary:
+---
+
+[source code chung](https://github.com/haingdc/web-component-labs)
+[source code bài viết](https://github.com/haingdc/web-component-labs/tree/main/lesson-03-stopwatch)
+
+Trong khi làm dự án, tôi có một lần đụng tới feature về một component được dùng global, khi chạy nó đảm bảo hiển thị đồng bộ cho mọi tab.
+Bài viết này là về một trường hợp tương tự, về cách tạo đồng hồ bấm giờ hiển thị thời gian trôi qua. Ví dụ như thời gian chạy của một người.
+
+Điểm chú ý là đồng hồ này không chỉ hiện ở mỗi 1 tab riêng biệt. Khi mở nhiều tabs hoặc windows, tất cả đồng hồ sẽ hiển thị giống nhau.
+
+Điểm thứ 2, khi tắt hết các tabs và mở lại, đồng hồ tiếp tục đếm thời gian thay vì đếm lại từ đầu.
+
+Dựa vào 2 điểm trên, ta cần một Nguồn Data mà các tabs/windows cùng truy xuất được và có tính chất bền vững. Trong bài, nguồn data đó chính là Web Storage API - Localstorage.
+
+Có 3 thành phần phục vụ cho yêu cầu trên:
+
+- WindowStage
+- CounterProvider
+- CounterConsumer
+
+# WindowState
+
+Giả sử nếu ta có có sẵn chức năng đếm. Khi đang mở nhiều tabs/windows, mỗi cái sẽ đếm bằng cách đồng thời đọc/ghi localstorage. Như vậy sẽ rất hỗn loạn.
+
+![IMG_5980.webp](/static/images/95e151fa-d4cf-4c8a-816f-ec4fb6340ff0/63a37fc9f71246788dbcb3f69398322e.webp)
+
+Ta nên chỉ có một tab/window để chứa một counter để đếm. Ta có thể gọi tab/window này là cửa sổ chính, bên cạnh các cửa sổ phụ. Nếu cửa sổ chính có vấn đề, bị block hay gì đó thì ta có thể bỏ đi, tìm một tab khác làm cửa số chính, tạo counter mới để tiếp tục đếm. WindowStage là giải pháp để quyết định đâu là cửa sổ chính-phụ.
+
+![IMG_5981.webp](/static/images/95e151fa-d4cf-4c8a-816f-ec4fb6340ff0/80e63bc656804570a007f0a592bde60a.webp)
+
+1. Nhịp đập của cửa sổ
+
+Mỗi tab/window sẽ đại diện bởi một WindowStage, ví von như là một trái tim. Một trái tim mà đập để thể hiện là cơ thể đang sống và hoạt động.
+
+Các các WindowStage hoạt động với nhau là dựa trên một bảng "Active windows". Bảng này nằm ở localstorage và ghi lại những WindowStage đang hoạt động. Phần tử trong danh sách bao gồm id của WindowStage và một giá trị heartbeat:
+
+![IMG_5982.webp](/static/images/95e151fa-d4cf-4c8a-816f-ec4fb6340ff0/48b30eb0136441c382e80e46f15116b0.webp)
+
+WindowStage sẽ có phương thức runHeartBeat() gồm các bước:
+
+- Bước 1 Cập nhật nhịp tim của mình
+- Bước 2 Kiểm tra WindowStage khác còn "sống" không
+- Bước 3 Chọn ra cửa sổ chính
+- Bước 4 Lặp lại runHeartBeat
+
+Tại sao cần làm vậy?
+
+__Theo dõi__: có bao nhiêu tab/window đang hoạt động
+__Chọn cửa sổ chính__: chỉ có 1 cửa sổ chính, còn lại là cửa sổ phụ
+__Dọn dẹp__: xoá những tab/window đã đóng hay đang bị block khỏi bảng "Active Windows"
+
+Để thực thi bảng trên, ta có thể:
+
+- id của WindowStage: ta lấy timestamp của hiện tại làm định danh
+- heartbeat: ta cứ lấy timestamp của hiện tại và cập nhật theo thời gian. Nếu sau 5 giây mà WindowStage không thông báo 1 giá trị mới, ta sẽ xoá khỏi bảng "Active Windows"
+
+2. Chọn ra cửa sổ chính?
+
+Mỗi WindowStage sẽ có phương thức promoteMainWindow() để quyết định liệu nó có phải cửa sổ chính hay không.
+
+Tôi thực thi đơn giản như sau:
+
+- Nếu chỉ có 1 mình nó đang hoạt động, nó sẽ là cửa sổ chính
+- Nếu có nhiều hơn 1 WindowStage hoạt động, cái cuối cùng của bảng "Active Windows" sẽ có vai trò cửa sổ chính.
+
+Bằng cách này, khi bạn mở một tab mới thì tab này sẽ chứa cửa sổ chính.
+
+# CounterProvider
+
+Với vai trò đếm thời gian, một CounterProvider sẽ thực hiện như sau:
+
+- Khi bắt đầu nó sẽ đếm từ 0
+- Kết quả đếm được cập nhật định kì lên localstorage
+- Tắt hết các tabs/windows và mở lại, nó có thể đọc giá trị từ localstorage để đếm tiếp thay vì đếm từ 0
+
+Tất cả tab/window, tại một thời điểm, chỉ cần có một CounterProvider tồn tại. Nếu chỉ có một tab/window, thì nó sẽ chứa một anh WindowStage là cửa sổ chính và một anh CounterProvider.
+
+Ngoài ra, như là một tuỳ chọn, Dựa vào giá trị đếm của mình, CounterProvider có thể giúp hiển thị lên UI thay vì sử dụng CounterConsumer phía dưới.
+
+![IMG_5988.webp](/static/images/95e151fa-d4cf-4c8a-816f-ec4fb6340ff0/d661bbb603f0413badb88e2d997f0084.webp)
+
+# CounterConsumer
+
+Nhiệm vụ CounterConsumer là theo dõi khi giá trị đếm thay đổi tới từ localstorage. Dựa vào giá trị này để hiển thị lên UI.
+
+![IMG_5987.webp](/static/images/95e151fa-d4cf-4c8a-816f-ec4fb6340ff0/7809bfa2acff4d47b33845a9589f77b9.webp) 
+
+# Kết quả triển khai
+
+Đây là kết quả thử thực hiện theo những mô tả trên:
+
+Mỗi tab chứa một `<timer-counter>`:
+
+![Screen Recording 2025-07-29 at 15.23.38.gif](/static/images/95e151fa-d4cf-4c8a-816f-ec4fb6340ff0/08fe8236d1924e6eaedd93200a167f1f.gif)
+
+Một tab chứa một và một tab chứa nhiều `<timer-counter>`:
+![Screen Recording 2025-07-29 at 15.39.24.gif](/static/images/95e151fa-d4cf-4c8a-816f-ec4fb6340ff0/88c68684cbf043e9a351250506253bf3.gif)
+
+Bạn có thể clone code về và sử dụng lệnh:
+
+```terminal
+deno task dev
+deno task storybook
+```
+
+# Singleton
+
+Trong quá trình thực hiện ví dụ, tôi bắt gặp trường hợp nếu tab có chứa cửa sổ chính, đồng thời, có nhiều đồng hồ UI xuất hiện thì thời gian hiển thị không đồng bộ. Do mỗi `<timer-counter>` có chứa một instance của `CounterProvider`. Nếu có 8 timer-counter sẽ có 8 CounterProvider cùng đồng thời đếm vào lưu vào localstorage.
+
+![IMG_5989.webp](/static/images/95e151fa-d4cf-4c8a-816f-ec4fb6340ff0/c0041b470df24ba4ae345a323ae04cb9.webp)
+
+Giải pháp là sử dụng Singleton, đây là design pattern giúp chỉ tạo một instance cho mỗi một loại. Và tôi áp dụng cho cả ba: WindowStage, CounterProvider và CounterConsumer.
+
+```typescript
+// ví dụ về Singleton
+
+// Khai báo
+class WindowStateManager {
+  static #instance: WindowStateManager;
+	
+  public static getInstance(): WindowStateManager {
+    if (!this.#instance) {
+      this.#instance = new WindowStateManager();
+    }
+    return this.#instance;
+  }
+}
+
+// Sử dụng
+const windowStage = WindowStage.getInstance();
+```
+
+Vậy là kết thúc bài viết. Ví dụ về đồng hồ thời gian trên đây thực ra chưa đầy đủ. Đó có thể là thắc mắc khi nào ta muốn dừng việc đếm, hay muốn đếm lại từ đầu, và những edge case chưa được xử lí. Thú thực khi chuẩn bị bài viết, mọi thứ mới rõ ràng hơn, demo nên là về stopwatch có chức năng play/pause và reset thì ý nghĩa của component mới rõ ràng. Tuy vại vì thời gian hạn hẹp tôi xin phép chỉ dừng lại ở đây. Tôi cũng để lại 1 bức hình draft để mốt có thể quay lại sau này.
+
+Cám ơn bạn đã đọc bài!
+
+Draft
+![IMG_5984.webp](/static/images/95e151fa-d4cf-4c8a-816f-ec4fb6340ff0/d98a427b29974a10aebe96c5b9c1a979.webp)
