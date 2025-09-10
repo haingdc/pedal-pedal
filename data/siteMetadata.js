@@ -3,7 +3,7 @@ const siteMetadata = {
   title: 'Ngày hè',
   author: 'Hai Nguyen',
   headerTitle: 'Blog ngày hè',
-  description: 'Viết về những điều yêu thích theo chuyên ngành và những trải nghiệm ngoài đời',
+  description: 'Viết về những điều yêu thích về lập trình và trải nghiệm ngoài cuộc sống',
   language: 'vi',
   theme: 'light', // system, dark or light
   siteUrl: 'https://ngayhe.com',
@@ -17,12 +17,12 @@ const siteMetadata = {
   // twitter: 'https://twitter.com/Twitter',
   facebook: 'https://facebook.com',
   youtube: 'https://youtube.com',
-  linkedin: 'https://www.linkedin.com',
+  linkedin: 'https://www.linkedin.com/in/haingdc',
   threads: 'https://www.threads.net',
   instagram: 'https://www.instagram.com',
   locale: 'vi-VN',
   // set to true if you want a navbar fixed to the top
-  stickyNav: false,
+  stickyNav: true,
   analytics: {
     // If you want to use an analytics provider you have to add it to the
     // content security policy in the `next.config.js` file.
