@@ -5,6 +5,8 @@ import Link from './Link'
 import MobileNav from './MobileNav'
 import ThemeSwitch from './ThemeSwitch'
 import SearchButton from './SearchButton'
+import Pen from './icons/Pen'
+import MapPinned from './icons/MapPinned'
 
 const Header = () => {
   let headerClass = 'flex items-center w-full bg-white dark:bg-gray-950 justify-between py-10 pb-0'
@@ -36,8 +38,12 @@ const Header = () => {
               <Link
                 key={link.title}
                 href={link.href}
-                className="block font-medium text-gray-900 hover:text-primary-500 dark:text-gray-100 dark:hover:text-primary-400"
+                className="flex items-center gap-1 font-medium text-gray-900 hover:text-primary-500 dark:text-gray-100 dark:hover:text-primary-400"
               >
+                {link.iconName && link.iconName === 'Pen' ? <Pen width={16} height={16} /> : null}
+                {link.iconName && link.iconName === 'MapPinned' ? (
+                  <MapPinned width={16} height={16} />
+                ) : null}
                 {link.title}
               </Link>
             ))}
