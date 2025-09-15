@@ -5,8 +5,14 @@ const headerNavLinks = [
   // { href: '/projects', title: 'Dự án' },
   // { href: '/about', title: 'Giới thiệu' },
   {
+    href: 'https://landing.ngayhe.com/chart.html',
+    title: 'Viết 300 words',
+    iconName: 'Pen',
+  },
+  {
     href: 'https://www.figma.com/board/CIo4vLPW0BevdY27kljGhO/Hai-Nguyen-s-Public-Roadmap?node-id=0-1&t=3TIdYprjTWjYV9Ar-1',
     title: 'Road map',
+    iconName: 'MapPinned',
   },
 ]
 
