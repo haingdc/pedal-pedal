@@ -5,7 +5,7 @@ const headerNavLinks = [
   // { href: '/projects', title: 'Dự án' },
   // { href: '/about', title: 'Giới thiệu' },
   {
-    href: 'https://landing.ngayhe.com/chart.html',
+    href: 'https://landing.ngayhe.com',
     title: 'Viết 300 words',
     iconName: 'Pen',
   },
