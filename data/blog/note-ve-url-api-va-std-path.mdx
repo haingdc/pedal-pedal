@@ -1,0 +1,126 @@
+---
+title: Note về URL API và @std/path
+date: '2025-10-23'
+tags: ['deno', 'url api', '@std/path']
+draft: false
+summary:
+---
+
+Gần đây tôi có sử dụng URL API để làm việc trong môi trường Deno -- runtime tương tự NodeJS. `URL` là Web API, được Deno hỗ trợ. Chính vì vậy, chúng ta có thể sử dụng nó mà không nhất thiết phải là môi trường Web. Vấn đề mà tôi gặp là không thể nhớ được cách dùng URL cứ sau bẵng đi một thời gian. Điều này khiến mỗi lần sử dụng, tôi lại phải đi tìm code ở các repository để đọc lại, rất mất công. Tốt hơn hết là note ra một bài viết để tiện lợi tra cứu sau này.
+
+`import.meta`: chứa metadata của một Javascript module trong ngữ cảnh cụ thể.
+
+Giả sử tôi có module với đường dẫn trên máy là: "/Volumes/ADATA_SSD/coding/temp/deno/joplin-secretary/joplin-recorder/src/core/constants.ts"
+
+```ts
+/**
+ * Module /Volumes/ADATA_SSD/coding/temp/deno/joplin-secretary/joplin-recorder/src/core/constants.ts
+ */
+
+import {dirname, fromFileUrl, join} from "@std/path"
+
+import.meta.url // file:///Volumes/ADATA_SSD/coding/temp/deno/joplin-secretary/joplin-recorder/src/core/constants.ts
+
+dirname(import.meta.url) // file:///Volumes/ADATA_SSD/coding/temp/deno/joplin-secretary/joplin-recorder/src/core
+
+// Without trailing slash
+join(dirname(import.meta.url), "../..") // file:/Volumes/ADATA_SSD/coding/temp/deno/joplin-secretary/joplin-recorder
+
+// VS
+
+// Trailing slash '/'
+join(dirname(import.meta.url), "../..", "/") // file:/Volumes/ADATA_SSD/coding/temp/deno/joplin-secretary/joplin-recorder/
+```
+
+Khi sử dụng với URL:
+
+```ts
+const path = "file:./test/file1.txt"
+
+// Expect
+const base = join(dirname(import.meta.url), "../..", "/") // trailing slash
+const baseURL = new URL(base)
+const url1 = new URL(path, baseURL)
+url1.href // file:///Volumes/ADATA_SSD/coding/temp/deno/joplin-secretary/joplin-recorder/test/file1.txt
+
+// VS
+
+// Unexpect
+const base = join(dirname(import.meta.url), "../..") // without trailing slash
+const baseURL = new URL(base)
+const url2 = new URL(path, baseURL)
+url2.href // file:///Volumes/ADATA_SSD/coding/temp/deno/joplin-secretary/test/file1.txt
+```
+
+Ở đây `href` của `url2` bị mất đi "joplin-recorder". Nguyên nhân là vì `baseURL` không có trailing slash.
+
+Tôi có đọc được nội dung về URL specification (chuẩn RFC 3986) như sau:
+- Ngược URL kết thúc có `/`, url này đại diện cho thư mục.
+- Nếu URL kết thúc KHÔNG có `/` → phần cuối được coi là tên tài nguyên (file name, page).
+- Khi resolve relative path → bỏ đi "tên tài nguyên", chỉ giữ parent directory.
+
+Theo như giải thích trên thì "joplin-recorder" nằm ở baseURL đang bị coi là tên tài nguyên. Nên nó sẽ bị bỏ đi để resolve relative path.
+
+Tóm lại, việc có trailing clash có thể rất quan trọng trong resolve đường dẫn.
+
+## Absolute path
+
+Một cái cũng dễ bị nhầm là khi có `/` có và không có ở đầu:
+
+```ts
+import { isAbsolute } from "@std/path/is-absolute";
+import { assert, assertFalse } from "@std/assert";
+
+assert(isAbsolute("/home/foo"));
+assertFalse(isAbsolute("home/foo"));
+assertFalse(isAbsolute("./home/foo"));
+```
+
+## Bỏ đi file protocol có thể dùng fromFileUrl
+
+```ts
+import { fromFileUrl } from "@std/path/from-file-url";
+import { assertEquals } from "@std/assert";
+
+// Converts a file URL to a path string
+if (Deno.build.os === "windows") {
+assertEquals(fromFileUrl("file:///home/foo"), "\\home\\foo");
+assertEquals(fromFileUrl("file:///C:/Users/foo"), "C:\\Users\\foo");
+assertEquals(fromFileUrl("file://localhost/home/foo"), "\\home\\foo");
+} else {
+assertEquals(fromFileUrl("file:///home/foo"), "/home/foo");
+}
+
+/**
+ * Verifies whether provided path is absolute.
+ *
+ * @param path Path to be verified as absolute.
+ * @returns `true` if path is absolute, `false` otherwise
+ */
+export function isAbsolute(path: string): boolean
+```
+
+## sử dụng join để resolve path giống như lệnh cd ..
+
+```ts
+import { join } from "@std/path/join";
+import { assertEquals } from "@std/assert";
+
+if (Deno.build.os === "windows") {
+assertEquals(join("C:\\foo", "bar", "baz\\quux", "garply", ".."), "C:\\foo\\bar\\baz\\quux");
+assertEquals(join(new URL("file:///C:/foo"), "bar", "baz/asdf", "quux", ".."), "C:\\foo\\bar\\baz\\asdf");
+} else {
+assertEquals(join("/foo", "bar", "baz/quux", "garply", ".."), "/foo/bar/baz/quux");
+assertEquals(join(new URL("file:///foo"), "bar", "baz/asdf", "quux", ".."), "/foo/bar/baz/asdf");
+}
+
+/**
+ * Joins a sequence of paths, then normalizes the resulting path.
+ *
+ * @param - path The path to join. This can be string or file URL.
+ * @param - paths Paths to be joined and normalized.
+ * @returns - The joined and normalized path.
+ */
+function join(path: string | URL, ...paths: string[]): string
+```
+
