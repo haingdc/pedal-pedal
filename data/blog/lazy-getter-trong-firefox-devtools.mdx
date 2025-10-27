@@ -1,0 +1,59 @@
+---
+title: Note về lazy getter trong Firefox devtools
+date: '2025-10-27'
+tags: ['firefox devtools', 'draft']
+draft: false
+summary:
+---
+
+Note về Lazy getter trong Javascript
+
+Lazy getter là một getter property chỉ tính toán giá trị của nó khi được truy cập lần đầu tiên, sau đó cache kết quả để sử dụng cho các lần truy cập sau. Điều này hữu ích khi:
+
+- Việc tính toán giá trị tốn kém (về thời gian hoặc tài nguyên)
+- Bạn muốn trì hoãn việc khởi tạo đến khi thực sự cần
+
+Cách dùng được thấy ở Firefox devtools:
+
+```js
+// devtools/client/inspector/boxmodel/box-model.js
+
+function BoxModel(inspector, window) {
+	//
+}
+
+BoxModel.prototype = {
+	get highlighters() {
+	    if (!this._highlighters) {
+	      // highlighters is a lazy getter in the inspector.
+	      this._highlighters = this.inspector.highlighters;
+	    }
+	
+	    return this._highlighters;
+  	}
+
+	get rulePreviewTooltip() {
+	    if (!this._tooltip) {
+	      this._tooltip = new RulePreviewTooltip(this.inspector.toolbox.doc);
+	    }
+	
+	    return this._tooltip;
+  },
+}
+```
+
+Ngoài ra có thể dùng với private field (ES2022+):
+
+```js
+class Example {
+  #cachedValue;
+  
+  get expensiveValue() {
+    if (this.#cachedValue === undefined) {
+      console.log('Computing...');
+      this.#cachedValue = Math.random() * 1000;
+    }
+    return this.#cachedValue;
+  }
+}
+```
