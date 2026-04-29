@@ -1,0 +1,176 @@
+---
+title: require trong Firefox Devtools và mối liên quan giữa URI với URL
+date: '2025-10-29'
+tags: ['firefox devtools']
+draft: true
+summary:
+---
+
+haingdc: "devtools/client/inspector/boxmodel/types.js:7" vì sao lệnh require trông lạ lùng thế. "resouce://..."
+
+GitHub Copilot: Cú pháp `require("resource://...")` này là đặc trưng của Firefox vì đây là một URI scheme đặc biệt mà Mozilla sử dụng cho hệ thống module nội bộ của Firefox. 
+
+Searched codebase for "resource:// protocol URI scheme Firefox module system", 30 results
+
+Searched text for `resource://devtools` (`**/devtools/**/*.js`), 10 results
+
+`resource://` là một **URI scheme đặc biệt** của Mozilla/Firefox để truy cập các module nội bộ của trình duyệt. Đây là phần của hệ thống module loader của Firefox.
+
+**Lý do:**
+
+1. **Firefox không chỉ là trình duyệt web** - nó cũng là một nền tảng ứng dụng với hàng ngàn module nội bộ viết bằng JavaScript
+2. **`resource://`** ánh xạ tới các thư mục thực trong source code của Firefox
+3. **Khác với `require()` trong Node.js** - Firefox sử dụng hệ thống module của riêng mình (DevTools Loader)
+
+**Ví dụ ánh xạ:**
+- `resource://devtools/` → devtools
+- `resource://gre/` → thư viện Firefox core (GRE = Gecko Runtime Environment)
+
+Trong file này, `resource://devtools/client/shared/vendor/react-prop-types.mjs` thực sự trỏ tới file tại:
+```
+firefox/devtools/client/shared/vendor/react-prop-types.mjs
+```
+
+Đây là cách Firefox tổ chức và load các module JavaScript nội bộ một cách nhất quán trong toàn bộ codebase, tương tự như Node.js nhưng dành riêng cho môi trường của Firefox.
+
+haingdc: bạn có thể nói thêm về DevTools Loader này?
+
+GitHub Copilot: Searched codebase for "DevTools Loader browser-loader module system require", 25 results
+
+Searched for files matching `**/loader/Loader*.js`, no matches
+
+Searched for files matching `**/browser-loader*.js`, 2 matches
+
+Searched for files matching `**/loader/*.sys.mjs`, 16 matches
+
+Searched for files matching `**/loader/*.js`, 4 matches
+
+Read [](file:///Volumes/ADATA_SSD/coding/temp/source-code-from-some-one/firefox/devtools/shared/loader)
+
+Read [](file:///Volumes/ADATA_SSD/coding/temp/source-code-from-some-one/firefox/devtools/shared/loader/Loader.sys.mjs#1-1), lines 1 to 101
+
+Read [](file:///Volumes/ADATA_SSD/coding/temp/source-code-from-some-one/firefox/devtools/shared/loader/base-loader.sys.mjs#1-1), lines 1 to 151
+
+Read [](file:///Volumes/ADATA_SSD/coding/temp/source-code-from-some-one/firefox/devtools/shared/loader/browser-loader.sys.mjs#1-1), lines 1 to 101
+
+Read [](file:///Volumes/ADATA_SSD/coding/temp/source-code-from-some-one/firefox/devtools/shared/loader/base-loader.sys.mjs#200-200), lines 200 to 400
+
+Read [](file:///Volumes/ADATA_SSD/coding/temp/source-code-from-some-one/firefox/devtools/shared/loader/base-loader.sys.mjs#400-400), lines 400 to 550
+
+## **DevTools Loader - Chi tiết**
+
+DevTools Loader là một **hệ thống module loader tùy chỉnh** của Mozilla cho Firefox DevTools. Đây là bộ loader riêng, hoàn toàn khác với Node.js, được thiết kế để xử lý các module trong môi trường trình duyệt Firefox.
+
+### **Kiến trúc chính:**
+
+1. **base-loader.sys.mjs** - Core loader engine
+   - Implement cơ chế `require()` kiểu CommonJS
+   - Quản lý module cache, dependencies
+   - Tạo sandbox để isolate module scopes
+   - Xử lý path resolution với `resource://` URIs
+
+2. **Loader.sys.mjs** - Main DevTools loader
+   - Wrapper quanh base-loader
+   - Cấu hình paths mapping (ví dụ: devtools → `resource://devtools`)
+   - Hỗ trợ loading cả CommonJS và ES Modules
+   - Cung cấp global DevTools loader instance
+
+3. **browser-loader.sys.mjs** - Browser environment loader
+   - Đặc biệt cho React components và UI modules
+   - Evaluate modules trong browser environment (có access tới `window`)
+   - Dùng cho các module cần DOM APIs
+
+### **Cách hoạt động:**
+
+```javascript
+// Khi bạn gọi:
+const PropTypes = require('resource://devtools/client/shared/vendor/react-prop-types.mjs');
+
+// Loader thực hiện:
+// 1. Parse URI: 'resource://devtools/...'
+// 2. Map 'devtools' → 'resource://devtools' (từ paths config)
+// 3. Resolve đến file thực: firefox/devtools/client/shared/vendor/react-prop-types.mjs
+// 4. Load nội dung file
+// 5. Evaluate trong sandbox hoặc global scope
+// 6. Cache module.exports
+// 7. Return exports
+```
+
+### **Đặc điểm:**
+
+- **Module caching** - Mỗi module chỉ load 1 lần
+- **Sandbox isolation** - Modules chạy trong isolated scopes để debug
+- **Path mapping** - `resource://`, `chrome://` URIs ánh xạ tới thư mục thực
+- **Mixed format support** - Hỗ trợ cả `.js` (CommonJS), `.mjs` (ESM), `.json`
+- **Hot reload** - Có thể unload/reload modules khi debug
+
+### **Tại sao cần loader riêng?**
+
+Firefox DevTools cần:
+- Debug được chính code của DevTools
+- Isolate modules để tránh conflict
+- Hỗ trợ cả Chrome DevTools Protocol
+- Load modules trong nhiều contexts khác nhau (browser, worker, remote)
+
+haingdc: uri khác url ntn?
+
+GitHub Copilot: **URI** (Uniform Resource Identifier) và **URL** (Uniform Resource Locator) có mối quan hệ cha-con:
+
+## **Khái niệm:**
+
+- **URI** = Định danh tài nguyên (identifier)
+- **URL** = Định vị tài nguyên (locator) - là một dạng của URI
+
+## **Công thức:**
+
+```
+URI = URN (Uniform Resource Name) + URL (Uniform Resource Locator)
+```
+
+## **Ví dụ cụ thể:**
+
+### **URL** (có thông tin location/cách truy cập):
+```javascript
+'https://mozilla.org/index.html'        // Protocol + location
+'file:///Users/me/document.pdf'         // Cách truy cập file
+'ftp://server.com/data.zip'             // Protocol để tải
+'resource://devtools/client/types.js'   // Cách load module trong Firefox
+```
+
+### **URN** (chỉ định danh, không có location):
+```javascript
+'urn:isbn:0451450523'                   // ISBN của sách
+'urn:uuid:6e8bc430-9c3a-11d9-9669'      // UUID identifier
+'urn:mozilla:extension:ublock'          // Tên extension
+```
+
+### **URI** (khái niệm chung bao gồm cả 2):
+```javascript
+// Tất cả URL đều là URI
+'https://mozilla.org/page.html'         // URI (đồng thời là URL)
+'mailto:user@example.com'               // URI (đồng thời là URL)
+
+// URN là URI nhưng không phải URL
+'urn:isbn:0451450523'                   // URI (nhưng là URN, không phải URL)
+```
+
+## **Trong file của bạn:**
+
+```javascript
+require("resource://devtools/client/shared/vendor/react-prop-types.mjs");
+```
+
+Đây là một **URL** (và do đó cũng là **URI**) vì:
+- Có scheme: `resource://`
+- Có path để locate: react-prop-types.mjs
+- Cho biết **cách truy cập** resource đó (thông qua resource protocol handler)
+
+## **Tóm tắt:**
+
+| | URI | URL | URN |
+|---|---|---|---|
+| **Là gì** | Identifier chung | Locator (subset của URI) | Name (subset của URI) |
+| **Chứa gì** | ID của resource | Cách truy cập + location | Chỉ tên định danh |
+| **Ví dụ** | Cả 2 loại dưới | `http://site.com` | `urn:isbn:123` |
+
+**→ Mọi URL đều là URI, nhưng không phải URI nào cũng là URL**
